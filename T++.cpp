@@ -59,16 +59,19 @@ std::vector<Token> tokenize(const std::string& str) {
 
 std::string tokens_to_asm(const vector<Token>& tokens) {
 	std::stringstream out;
-	out << "global _start" << endl;
-	out << "_start:" << endl;
+	//out << "section .text\n";
+	out << "global main\n";
+	out << "extern ExitProcess\n";
+	out << "\n";
+	out << "main:\n";
 	for (int i = 0; i < tokens.size(); i++) {
 		const Token& token = tokens.at(i);
 		if (token.type == TokenType::_return) {
 			if (i + 1 < tokens.size() && tokens.at(i + 1).type == TokenType::int_lit) {
 				if (i + 2 < tokens.size() && tokens.at(i + 2).type == TokenType::semi) {
-					out << "    mov rax, 60" << endl;
-					out << "    mov rdi, " << tokens.at(i+1).value.value() << endl;
-					out << "    syscall";
+					out << "	push " << tokens.at(i + 1).value.value() << "\n";
+					out << "	call ExitProcess\n";
+					//out << "	syscall";
 				}
 			}
 		}
@@ -94,7 +97,7 @@ int main(int argc, char* argv[]) {
 	for (Token token : tokens) {
 		cout << token << endl;
 	}
-	cout << tokens_to_asm(tokens) << endl;
+	cout << endl << tokens_to_asm(tokens) << endl;
 
 	std::fstream outputfile("../../../out.asm", std::ios::out);
 	outputfile << tokens_to_asm(tokens);
@@ -103,9 +106,30 @@ int main(int argc, char* argv[]) {
 	//system("cd ~");
 	//system("nasm -f elf64 ../../../out.asm");
 	//system("ld -o ../../../out.exe ../../../out.o");
-	system("wsl nasm -f elf64 ../../../out.asm -o ../../../out.o");
-	system("wsl ld -o ../../../out.exe ../../../out.o");
+	
+	
+	//system("nasm -f win64 ../../../out.asm -o ../../../out.o");
+	//system("link ../../../out.o /OUT:../../../out.exe /ENTRY:main");
 
+
+	// Assemble the assembly code using NASM
+	const char* nasmCommand = "nasm -f win64 ../../../out.asm -o ../../../out.obj";
+	//const char* nasmCommand = "ml64 /c /Zi /Fo../../../out.obj ../../../out.asm";
+	if (system(nasmCommand) == -1) {
+		std::cerr << "Error assembling with NASM" << std::endl;
+		return 1;
+	}
+
+	// Link the object file using the Microsoft linker
+	//const char* linkerCommand = "link ../../../out.o /OUT:../../../out.exe /ENTRY:main";
+	const char* linkerCommand = "link /subsystem:console /entry:main /OUT:../../../out.exe ../../../out.obj \"C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.22621.0\\um\\x64\\kernel32.lib\"";
+
+	if (system(linkerCommand) == -1) {
+		std::cerr << "Error linking with the Microsoft linker" << std::endl;
+		return 1;
+	}
+
+	std::cout << "Assembly and linking completed successfully." << std::endl;
 	return EXIT_SUCCESS;
 }
 
