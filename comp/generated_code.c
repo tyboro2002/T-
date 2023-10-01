@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int main() {
-	printf("hello world!");
-	exit(69);
+	printf("hello world!, this is a tpp default program.");
+	return(10);
     return 0;
 }

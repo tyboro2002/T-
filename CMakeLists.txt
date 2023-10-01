@@ -12,7 +12,7 @@ endif()
 project ("T++")
 
 # Add source to this project's executable.
-add_executable (T++ "T++.cpp" "T++.h")
+add_executable (T++ "T++.cpp" "T++.h" "Tokenizer.cpp" "Tokenizer.h" "Types.h" "Types.cpp" "CodeGenerator.cpp" "CodeGenerator.h" "Parser.h" "Parser.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET T++ PROPERTY CXX_STANDARD 20)
