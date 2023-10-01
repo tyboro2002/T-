@@ -16,11 +16,13 @@ std::vector<Token> Tokenizer::tokenize() {
 	while (peak().has_value()) {
 		if (peak().value() == '"') {
 			consume(); // consume the opening "
+			tokens.push_back({ .type = TokenType::open_Quote });
 			while (peak().has_value() && peak().value() != '"') {
 				buf.push_back(consume());
 			}
 			consume(); // consume the closing "
 			tokens.push_back({ .type = TokenType::string_lit, .value = buf });
+			tokens.push_back({ .type = TokenType::closed_Quote });
 			buf.clear();
 		}else if (isalpha(peak().value())) {
 			buf.push_back(consume());

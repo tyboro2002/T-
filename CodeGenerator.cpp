@@ -2,59 +2,26 @@
 
 using namespace std;
 
-std::string generateCCode(const vector<Token>& tokens) {
+std::string Generator::generate() const {
 	std::stringstream out;
 	out << "#include <stdio.h>" << NewLine;
 	out << "#include <stdlib.h>" << NewLine << NewLine;
 	out << "int main() {" << NewLine;
-	for (int i = 0; i < tokens.size(); i++) {
-		const Token& token = tokens.at(i);
-		if (token.type == TokenType::_exit) {
-			if (i + 1 < tokens.size() && tokens.at(i + 1).type == TokenType::open_Paren) {
-				if (i + 2 < tokens.size() && tokens.at(i + 2).type == TokenType::int_lit) {
-					if (i + 3 < tokens.size() && tokens.at(i + 3).type == TokenType::closed_Paren) {
-						if (i + 4 < tokens.size() && tokens.at(i + 4).type == TokenType::semi) {
-							out << "	exit(" << tokens.at(i + 2).value.value() << ");" << NewLine;
-						}
-					}
-				}
-			}
+	for (int i = 0; i < m_prog.codeLines.size(); i++) {
+		const std::variant<NodeExit, NodePrint, NodeReturn>& variantNode = m_prog.codeLines.at(i);
+		if (std::holds_alternative<NodeExit>(variantNode)) {
+			const NodeExit& exitNode = std::get<NodeExit>(variantNode);
+			out << "	exit(" << exitNode.expr.int_lit.value.value() << ");" << NewLine;
+		}else if (std::holds_alternative<NodeReturn>(variantNode)) { //TODO add return string
+			const NodeReturn& returnNode = std::get<NodeReturn>(variantNode);
+			out << "	return(" << returnNode.expr.int_lit.value.value() << ");" << NewLine;
+		}else if (std::holds_alternative<NodePrint>(variantNode)) {
+			const NodePrint& printNode = std::get<NodePrint>(variantNode);
+			out << "	printf(\"" << printNode.string_lit.value.value() << "\");" << NewLine;
 		}
-
-		if (token.type == TokenType::_return) {
-			if (i + 1 < tokens.size() && tokens.at(i + 1).type == TokenType::open_Paren) {
-				if (i + 2 < tokens.size() && tokens.at(i + 2).type == TokenType::int_lit) {
-					if (i + 3 < tokens.size() && tokens.at(i + 3).type == TokenType::closed_Paren) {
-						if (i + 4 < tokens.size() && tokens.at(i + 4).type == TokenType::semi) {
-							out << "	return(" << tokens.at(i + 2).value.value() << ");" << NewLine;
-						}
-					}
-				}
-			}
-		}
-
-		if (token.type == TokenType::_return) {
-			if (i + 1 < tokens.size() && tokens.at(i + 1).type == TokenType::open_Paren) {
-				if (i + 2 < tokens.size() && tokens.at(i + 2).type == TokenType::string_lit) {
-					if (i + 3 < tokens.size() && tokens.at(i + 3).type == TokenType::closed_Paren) {
-						if (i + 4 < tokens.size() && tokens.at(i + 4).type == TokenType::semi) {
-							out << "	return(\"" << tokens.at(i + 2).value.value() << "\");" << NewLine;
-						}
-					}
-				}
-			}
-		}
-
-		if (token.type == TokenType::say) {
-			if (i + 1 < tokens.size() && tokens.at(i + 1).type == TokenType::open_Paren) {
-				if (i + 2 < tokens.size() && tokens.at(i + 2).type == TokenType::string_lit) {
-					if (i + 3 < tokens.size() && tokens.at(i + 3).type == TokenType::closed_Paren) {
-						if (i + 4 < tokens.size() && tokens.at(i + 4).type == TokenType::semi) {
-							out << "	printf(\"" << tokens.at(i + 2).value.value() << "\");" << NewLine;
-						}
-					}
-				}
-			}
+		else {
+			std::cerr << "you did some bad formating" << std::endl;
+			exit(EXIT_FAILURE);
 		}
 	}
 	out << "    return 0;" << NewLine;

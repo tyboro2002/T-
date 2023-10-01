@@ -9,6 +9,24 @@
 
 using namespace std;
 
+void printProgram(const program& prog) {
+	std::cout << "Program:" << std::endl;
+	for (const auto& codeLine : prog.codeLines) {
+		if (std::holds_alternative<NodeExit>(codeLine)) {
+			const NodeExit& exitNode = std::get<NodeExit>(codeLine);
+			std::cout << "NodeExit: expr = " << exitNode.expr.int_lit << std::endl;
+		}
+		else if (std::holds_alternative<NodePrint>(codeLine)) {
+			const NodePrint& printNode = std::get<NodePrint>(codeLine);
+			std::cout << "NodePrint: string_lit = " << printNode.string_lit << std::endl;
+		}
+		else if (std::holds_alternative<NodeReturn>(codeLine)) {
+			const NodeReturn& returnNode = std::get<NodeReturn>(codeLine);
+			std::cout << "NodeReturn: expr = " << returnNode.expr.int_lit << std::endl;
+		}
+	}
+}
+
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		cerr << "Incorrect usage. Correct usage is ..." << endl;
@@ -28,8 +46,20 @@ int main(int argc, char* argv[]) {
 		cout << token << endl;
 	}
 
+	Parser parser(tokens);
+	std::optional<program> prog = parser.parse();
+
+	if (!prog.has_value()) {
+		std::cerr << "parsing of the code failed" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	std::cout << "the program is" << std:: endl;
+	printProgram(prog.value());
+
 	// Generate C code
-	std::string cCode = generateCCode(tokens);
+	Generator gen(prog.value());
+	std::string cCode = gen.generate();
 
 	// Write the generated C code to a file
 	std::ofstream outputFile("../../../comp/generated_code.c");
