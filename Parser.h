@@ -24,8 +24,14 @@ struct NodeIdentifier {
 	NodeExpr expr;
 };
 
+struct program; // Forward declaration
+
+struct NodeScope {
+	std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> codeLines;
+};
+
 struct program {
-	std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier>> codeLines;
+	std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> codeLines;
 };
 
 class Parser {
@@ -38,10 +44,18 @@ public:
 	std::optional<program> parse();
 private:
 	[[nodiscard]] std::optional<Token> peak(int ahead = 1) const;
+
+	NodeReturn parseReturn();
+	NodeIdentifier parseIdentifier();
+	NodePrint parseSay();
+	NodeExit parseExit();
+	std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> parseProgram();
 	void parseOpenParen();
 	void parseCloseParen();
 	void parseOpenQuote();
 	void parseCloseQuote();
+	void parseOpenCurly();
+	void parseCloseCurly();
 	void parseEquals();
 	void parseSemi();
 	Token consume();

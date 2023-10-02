@@ -19,7 +19,9 @@ enum class TokenType {
     closed_Quote,
     _return,
     identifier,
-    equals
+    equals,
+    open_curly,
+    closed_curly
 };
 
 struct Token {

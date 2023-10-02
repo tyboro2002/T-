@@ -51,6 +51,22 @@ void Parser::parseCloseQuote() {
 	consume();
 }
 
+void Parser::parseOpenCurly() {
+	if (!peak().has_value() || peak().value().type != TokenType::open_curly) {
+		std::cerr << "expected {" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	consume();
+}
+
+void Parser::parseCloseCurly() {
+	if (!peak().has_value() || peak().value().type != TokenType::closed_curly) {
+		std::cerr << "expected }" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	consume();
+}
+
 void Parser::parseEquals() {
 	if (!peak().has_value() || peak().value().type != TokenType::equals) {
 		std::cerr << "expecting =" << std::endl;
@@ -67,78 +83,96 @@ void Parser::parseSemi() {
 	consume(); //consume the semicoln
 }
 
-std::optional<program> Parser::parse() {
+NodeReturn Parser::parseReturn(){
+	NodeReturn return_node;
+	consume(); //consume the return node
+	parseOpenParen();
+	if (auto node_expr = parse_expr()) {
+		return_node = NodeReturn{ .retVal = node_expr.value() };
+	}
+	else {
+		std::cerr << "invalid expresion!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	parseCloseParen();
+	parseSemi();
+	return return_node;
+}
+
+NodeIdentifier Parser::parseIdentifier() {
+	NodeIdentifier identifier_node;
+	Token nameToken = consume();
+	parseEquals();
+	if (auto node_expr = parse_expr()) {
+		identifier_node = NodeIdentifier{ .name = nameToken.value.value(), .expr = node_expr.value() };
+	}
+	else {
+		std::cerr << "invalid expresion!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	parseSemi();
+	return identifier_node;
+}
+
+NodePrint Parser::parseSay(){
+	NodePrint print_node;
+	consume();
+	parseOpenParen();
+	parseOpenQuote();
+	if (peak().has_value() && peak().value().type == TokenType::string_lit) {
+		print_node = NodePrint{ .string_lit = consume() };
+	}
+	parseCloseQuote();
+	parseCloseParen();
+	parseSemi();
+	return print_node;
+}
+
+NodeExit Parser::parseExit() {
+	NodeExit exit_node;
+	consume(); //consume the exit node
+	if (auto node_expr = parse_expr()) {
+		exit_node = NodeExit{ .expr = node_expr.value() };
+	}
+	else {
+		std::cerr << "invalid expresion!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	parseSemi();
+	return exit_node;
+}
+
+std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> Parser::parseProgram(){
 	program prog;
-	//std::cout << std::endl << std::endl << std::endl;
 	while (peak().has_value()) {
 		//std::cout << "token now is: " << peak().value() << std::endl;
-		if (peak().value().type == TokenType::_exit) {
-			//std::cout << "exit detected" << std::endl;
-			NodeExit exit_node;
-			consume(); //consume the exit node
-			if (auto node_expr = parse_expr()) {
-				exit_node = NodeExit{ .expr = node_expr.value() };
-			}
-			else {
-				std::cerr << "invalid expresion!" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-			parseSemi();
-
-			// Add the exit node to the program
-			prog.codeLines.push_back(exit_node);
-		}else if(peak().value().type == TokenType::say){
-			//std::cout << "say detected" << std::endl;
-			NodePrint print_node;
+		if (peak().value().type == TokenType::closed_curly) {
+			return prog.codeLines;
+		}else if (peak().value().type == TokenType::open_curly) {
 			consume();
-			parseOpenParen(); 
-			parseOpenQuote();
-			if (peak().has_value() && peak().value().type == TokenType::string_lit) {
-				print_node = NodePrint{ .string_lit = consume()};
-			}
-			parseCloseQuote();
-			parseCloseParen();
-			parseSemi();
-			// Add the print node to the program
-			prog.codeLines.push_back(print_node);
-		}else if (peak().value().type == TokenType::_return) {
-			//std::cout << "exit detected" << std::endl;
-			NodeReturn return_node;
-			consume(); //consume the return node
-			parseOpenParen();
-			if (auto node_expr = parse_expr()) {
-				return_node = NodeReturn{ .retVal = node_expr.value() };
-			}
-			else {
-				std::cerr << "invalid expresion!" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-			parseCloseParen();
-			parseSemi();
-
-			// Add the exit node to the program
-			prog.codeLines.push_back(return_node);
+			prog.codeLines.push_back(NodeScope{ .codeLines = parseProgram() });
+			parseCloseCurly();
+		
+		}else if (peak().value().type == TokenType::_exit) {
+			prog.codeLines.push_back(parseExit()); // Add the exit node to the program
+		}
+		else if (peak().value().type == TokenType::say) {
+			prog.codeLines.push_back(parseSay()); // Add the print node to the program
+		}
+		else if (peak().value().type == TokenType::_return) {
+			prog.codeLines.push_back(parseReturn()); // Add the return node to the program
 		}
 		else if (peak().value().type == TokenType::identifier) {
-			//std::cout << "exit detected" << std::endl;
-			NodeIdentifier identifier_node;
-			Token nameToken = consume(); //consume the return node
-			parseEquals();
-			if (auto node_expr = parse_expr()) {
-				identifier_node = NodeIdentifier{.name = nameToken.value.value(), .expr = node_expr.value()};
-			}
-			else {
-				std::cerr << "invalid expresion!" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-			parseSemi();
-
-			// Add the exit node to the program
-			prog.codeLines.push_back(identifier_node);
-		}else {
+			prog.codeLines.push_back(parseIdentifier()); // Add the identifier node to the program
+		}
+		else {
 			std::cerr << "found a token i dont like here, namely: " << peak().value() << std::endl; //TODO add parsing for extra nodes
 			exit(EXIT_FAILURE);
 		}
 	}
-	return prog;
+	return prog.codeLines;
+}
+
+std::optional<program> Parser::parse() {
+	return program{.codeLines = parseProgram()};
 }

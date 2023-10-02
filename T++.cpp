@@ -35,8 +35,12 @@ void printProgram(const program& prog) {
 		}else if (std::holds_alternative<NodeIdentifier>(codeLine)) {
 			const NodeIdentifier& identifierNode = std::get<NodeIdentifier>(codeLine);
 			std::cout << "NodeIdentifier: name = " << identifierNode.name << ", value = " << identifierNode.expr.int_lit_Identif.value.value() << std::endl;
-		}
-		else {
+		}else if (std::holds_alternative<NodeScope>(codeLine)) {
+			const NodeScope& scopeNode = std::get<NodeScope>(codeLine);
+			std::cout << "scopeNode open: ";
+			printProgram(program{.codeLines = scopeNode.codeLines});
+			std::cout << "scopeNode close" << std::endl;
+		}else {
 			std::cout << "Node in print i dont know" << std::endl;
 		}
 	}
@@ -85,7 +89,7 @@ int main(int argc, char* argv[]) {
 	// Compile the generated C code using a C++ compiler (e.g., g++)
 	//int compileStatus = std::system("gcc -mconsole ../../../comp/generated_code.c -o ../../../comp/output_program.exe");
 	//int compileStatus = std::system("cd ../../../comp & dir & echo \"file contents:\" & type generated_code.c & gcc -mconsole generated_code.c -o output_program.exe");
-	int compileStatus = std::system("cd ../../../comp & echo \"file contents:\" & type generated_code.c & gcc -mconsole generated_code.c -o output_program.exe");
+	int compileStatus = std::system("cd ../../../comp & echo . & echo \"file contents:\" & type generated_code.c & gcc -mconsole generated_code.c -o output_program.exe");
 
 	std::cout << std::endl;
 	if (compileStatus == 0) {

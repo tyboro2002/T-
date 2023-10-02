@@ -27,6 +27,10 @@ std::string TokenTypeToString(TokenType type) {
         return "identifier";
     case TokenType::equals:
         return "equals";
+    case TokenType::open_curly:
+        return "open_curly";
+    case TokenType::closed_curly:
+        return "closed_curly";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

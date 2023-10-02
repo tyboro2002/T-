@@ -67,6 +67,12 @@ std::vector<Token> Tokenizer::tokenize() {
 		}else if (peak().value() == ')') {
 			tokens.push_back({ .type = TokenType::closed_Paren });
 			consume();
+		}else if (peak().value() == '{') {
+			tokens.push_back({ .type = TokenType::open_curly });
+			consume();
+		}else if (peak().value() == '}') {
+			tokens.push_back({ .type = TokenType::closed_curly });
+			consume();
 		}else if (peak().value() == '=') {
 			tokens.push_back({ .type = TokenType::equals });
 			consume();

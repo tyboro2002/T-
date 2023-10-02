@@ -1,0 +1,7 @@
+Expr -> (int_lit / identifier)
+Return -> (Expr / string_lit)
+print -> string_lit
+Exit -> Expr
+Identifier -> string + Expr
+Scope -> [(Exit/Print/Return/Identifier/Scope)]
+program -> [(Exit/Print/Return/Identifier/Scope)]
