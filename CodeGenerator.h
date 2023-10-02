@@ -14,5 +14,5 @@ public:
 	Generator(program root) :m_prog(std::move(root)) {}
 	[[nodiscard]] std::string generate();
 private:
-	std::string generateCodeLines(std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> codeLines);
+	std::string generateCodeLines(std::vector<standAloneNode> codeLines);
 };

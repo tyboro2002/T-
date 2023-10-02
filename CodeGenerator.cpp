@@ -2,10 +2,10 @@
 
 using namespace std;
 
-std::string Generator::generateCodeLines(std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> inputCodeLines) {
+std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLines) {
 	std::stringstream out;
 	for (int i = 0; i < inputCodeLines.size(); i++) {
-		const std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>& variantNode = inputCodeLines.at(i);
+		const standAloneNode& variantNode = inputCodeLines.at(i);
 		if (std::holds_alternative<NodeExit>(variantNode)) {
 			const NodeExit& exitNode = std::get<NodeExit>(variantNode);
 			out << "	exit(" << exitNode.expr.int_lit_Identif.value.value() << ");" << NewLine;
@@ -56,8 +56,15 @@ std::string Generator::generateCodeLines(std::vector<std::variant<NodeExit, Node
 				out << generateCodeLines(scopeNode.codeLines);
 			}
 			out << "}" << NewLine;
-		}
-		else {
+		}else if (std::holds_alternative<NodeIf>(variantNode)) {
+			const NodeIf& ifNode = std::get<NodeIf>(variantNode);
+			out << "if (";
+			out << ifNode.expr.int_lit_Identif.value.value();
+			out << ")";
+			if (ifNode.scope.codeLines.size() > 0) {
+				out << generateCodeLines(ifNode.scope.codeLines);
+			}
+		}else {
 			std::cerr << "you did some bad formating" << std::endl;
 			exit(EXIT_FAILURE);
 		}

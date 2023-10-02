@@ -35,6 +35,12 @@ void printProgram(const program& prog) {
 		}else if (std::holds_alternative<NodeIdentifier>(codeLine)) {
 			const NodeIdentifier& identifierNode = std::get<NodeIdentifier>(codeLine);
 			std::cout << "NodeIdentifier: name = " << identifierNode.name << ", value = " << identifierNode.expr.int_lit_Identif.value.value() << std::endl;
+		}else if (std::holds_alternative<NodeIf>(codeLine)) {
+			const NodeIf& ifNode = std::get<NodeIf>(codeLine);
+			std::cout << "ifNode: expr: " << ifNode.expr.int_lit_Identif.value.value() << std::endl;
+			std::cout << "scopeNode open: ";
+			printProgram(program{ .codeLines = ifNode.scope.codeLines});
+			std::cout << "scopeNode close" << std::endl;
 		}else if (std::holds_alternative<NodeScope>(codeLine)) {
 			const NodeScope& scopeNode = std::get<NodeScope>(codeLine);
 			std::cout << "scopeNode open: ";

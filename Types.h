@@ -21,7 +21,9 @@ enum class TokenType {
     identifier,
     equals,
     open_curly,
-    closed_curly
+    closed_curly,
+    _if,
+    _else
 };
 
 struct Token {

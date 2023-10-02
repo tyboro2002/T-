@@ -6,8 +6,8 @@ int main() {
 	int x=5;
 	int b=x;
 	x=5;
-{
-	int a=5;
+if (x){
+	printf("hey i passed the test");
 }
 	return(b);
     return 0;

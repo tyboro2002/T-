@@ -1,7 +1,10 @@
 #pragma once
+#include <fstream>
 #include <vector>
 #include <variant>
 #include "Types.h"
+
+#define standAloneNode std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope, NodeIf>
 
 struct NodeExpr {
 	Token int_lit_Identif;
@@ -24,14 +27,20 @@ struct NodeIdentifier {
 	NodeExpr expr;
 };
 
-struct program; // Forward declaration
+struct NodeIf;
 
 struct NodeScope {
-	std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> codeLines;
+	std::vector<standAloneNode> codeLines;
+};
+
+struct NodeIf {
+	NodeExpr expr;
+	NodeScope scope;
+	//std::optional<NodeIf> elsePart;
 };
 
 struct program {
-	std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> codeLines;
+	std::vector<standAloneNode> codeLines;
 };
 
 class Parser {
@@ -49,7 +58,9 @@ private:
 	NodeIdentifier parseIdentifier();
 	NodePrint parseSay();
 	NodeExit parseExit();
-	std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> parseProgram();
+	//std::optional<NodeIf> parseOptionalElseIfElse();
+	NodeIf parseIf();
+	std::vector<standAloneNode> parseProgram();
 	void parseOpenParen();
 	void parseCloseParen();
 	void parseOpenQuote();

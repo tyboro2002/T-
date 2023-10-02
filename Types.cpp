@@ -31,6 +31,10 @@ std::string TokenTypeToString(TokenType type) {
         return "open_curly";
     case TokenType::closed_curly:
         return "closed_curly";
+    case TokenType::_if:
+        return "_if";
+    case TokenType::_else:
+        return "_else";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

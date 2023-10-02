@@ -142,7 +142,49 @@ NodeExit Parser::parseExit() {
 	return exit_node;
 }
 
-std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope>> Parser::parseProgram(){
+/*
+std::optional<NodeIf> Parser::parseOptionalElseIfElse() {
+	NodeIf ifNode;
+	if (!peak().has_value() || peak().value().type != TokenType::_else) {
+		return {};
+	}
+	consume(); //consume the if token
+	if (peak().has_value() && peak().value().type == TokenType::_if) {
+		parseOpenParen();
+		if (auto node_expr = parse_expr()) {
+			parseCloseParen();
+
+			ifNode = NodeIf{ .expr = node_expr.value(), .scope = parseProgram(), .elsePart = parseOptionalElseIfElse()};
+		}
+		else {
+			std::cerr << "invalid expresion!" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		return ifNode;
+	}
+	else {
+		ifNode = NodeIf{ .expr = NodeExpr{.int_lit_Identif = Token{.type = TokenType::int_lit, .value = "1"}}, .scope = parseProgram(), .elsePart = parseOptionalElseIfElse()};
+		return ifNode;
+	}
+}
+*/
+
+NodeIf Parser::parseIf() {
+	NodeIf ifNode;
+	consume(); //consume the if token
+	parseOpenParen();
+	if (auto node_expr = parse_expr()) {
+		parseCloseParen();
+		ifNode = NodeIf{ .expr = node_expr.value(), .scope = parseProgram()/*, .elsePart = parseOptionalElseIfElse()*/};
+	}
+	else {
+		std::cerr << "invalid expresion!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	return ifNode;
+}
+
+std::vector<standAloneNode> Parser::parseProgram(){
 	program prog;
 	while (peak().has_value()) {
 		//std::cout << "token now is: " << peak().value() << std::endl;
@@ -155,17 +197,15 @@ std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeSc
 		
 		}else if (peak().value().type == TokenType::_exit) {
 			prog.codeLines.push_back(parseExit()); // Add the exit node to the program
-		}
-		else if (peak().value().type == TokenType::say) {
+		}else if (peak().value().type == TokenType::say) {
 			prog.codeLines.push_back(parseSay()); // Add the print node to the program
-		}
-		else if (peak().value().type == TokenType::_return) {
+		}else if (peak().value().type == TokenType::_return) {
 			prog.codeLines.push_back(parseReturn()); // Add the return node to the program
-		}
-		else if (peak().value().type == TokenType::identifier) {
+		}else if (peak().value().type == TokenType::identifier) {
 			prog.codeLines.push_back(parseIdentifier()); // Add the identifier node to the program
-		}
-		else {
+		}else if (peak().value().type == TokenType::_if) {
+			prog.codeLines.push_back(parseIf()); // Add the identifier node to the program
+		}else {
 			std::cerr << "found a token i dont like here, namely: " << peak().value() << std::endl; //TODO add parsing for extra nodes
 			exit(EXIT_FAILURE);
 		}
