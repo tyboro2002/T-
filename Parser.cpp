@@ -10,7 +10,9 @@ Token Parser::consume() { return m_tokens.at(m_index++);}
 std::optional<NodeExpr> Parser::parse_expr() {
 	std::optional<NodeExpr> expr_node;
 	if (peak().has_value() && peak().value().type == TokenType::int_lit) {
-		return NodeExpr{ .int_lit = consume() };
+		return NodeExpr{ .int_lit_Identif = consume() };
+	}else if (peak().has_value() && peak().value().type == TokenType::identifier) {
+		return NodeExpr{ .int_lit_Identif = consume() };
 	}else {
 		return {};
 	}
@@ -34,19 +36,27 @@ void Parser::parseCloseParen() {
 }
 
 void Parser::parseOpenQuote() {
-	if (!peak().has_value() || peak().value().type != TokenType::closed_Quote) {
-		std::cerr << "please close your string quotes" << std::endl;
+	if (!peak().has_value() || peak().value().type != TokenType::open_Quote) {
+		std::cerr << "please open your string quotes." << NewLine << peak().value() << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	consume();
 }
 
 void Parser::parseCloseQuote() {
-	if (!peak().has_value() || peak().value().type != TokenType::open_Paren) {
-		std::cerr << "expecting (" << std::endl;
+	if (!peak().has_value() || peak().value().type != TokenType::closed_Quote) {
+		std::cerr << "please close your string quote" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	consume();
+}
+
+void Parser::parseEquals() {
+	if (!peak().has_value() || peak().value().type != TokenType::equals) {
+		std::cerr << "expecting =" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	consume(); //consume the equals
 }
 
 void Parser::parseSemi() {
@@ -97,7 +107,7 @@ std::optional<program> Parser::parse() {
 			consume(); //consume the return node
 			parseOpenParen();
 			if (auto node_expr = parse_expr()) {
-				return_node = NodeReturn{ .expr = node_expr.value() };
+				return_node = NodeReturn{ .retVal = node_expr.value() };
 			}
 			else {
 				std::cerr << "invalid expresion!" << std::endl;
@@ -108,6 +118,23 @@ std::optional<program> Parser::parse() {
 
 			// Add the exit node to the program
 			prog.codeLines.push_back(return_node);
+		}
+		else if (peak().value().type == TokenType::identifier) {
+			//std::cout << "exit detected" << std::endl;
+			NodeIdentifier identifier_node;
+			Token nameToken = consume(); //consume the return node
+			parseEquals();
+			if (auto node_expr = parse_expr()) {
+				identifier_node = NodeIdentifier{.name = nameToken.value.value(), .expr = node_expr.value()};
+			}
+			else {
+				std::cerr << "invalid expresion!" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			parseSemi();
+
+			// Add the exit node to the program
+			prog.codeLines.push_back(identifier_node);
 		}else {
 			std::cerr << "found a token i dont like here, namely: " << peak().value() << std::endl; //TODO add parsing for extra nodes
 			exit(EXIT_FAILURE);

@@ -3,6 +3,8 @@
 
 int main() {
 	printf("hello world!, this is a tpp default program.");
-	return(10);
+	int x=5;
+	int b=x;
+	return(b);
     return 0;
 }

@@ -23,6 +23,10 @@ std::string TokenTypeToString(TokenType type) {
         return "closed_Quote";
     case TokenType::string_lit:
         return "string_lit";
+    case TokenType::identifier:
+        return "identifier";
+    case TokenType::equals:
+        return "equals";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

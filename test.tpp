@@ -1,2 +1,4 @@
 say ("hello world!, this is a tpp default program.");
-return (10);
+x = 5;
+b = x;
+return (b);

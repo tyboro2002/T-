@@ -9,6 +9,7 @@
 
 class Generator {
 	program m_prog;
+	std::vector<std::string> m_defined_variabels;
 public:
 	Generator(program root) :m_prog(std::move(root)) {}
 	[[nodiscard]] std::string generate() const;

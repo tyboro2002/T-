@@ -46,8 +46,9 @@ std::vector<Token> Tokenizer::tokenize() {
 				continue;
 			}
 			else {
-				cerr << "you messed up with: \"" << buf << "\"" << endl;
-				exit(EXIT_FAILURE);
+				tokens.push_back({ .type = TokenType::identifier, .value = buf });
+				buf.clear();
+				continue;
 			}
 		}
 		else if (isdigit(peak().value())) {
@@ -65,6 +66,9 @@ std::vector<Token> Tokenizer::tokenize() {
 			consume();
 		}else if (peak().value() == ')') {
 			tokens.push_back({ .type = TokenType::closed_Paren });
+			consume();
+		}else if (peak().value() == '=') {
+			tokens.push_back({ .type = TokenType::equals });
 			consume();
 		}else if (isspace(peak().value())) {
 			consume();

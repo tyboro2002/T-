@@ -17,7 +17,9 @@ enum class TokenType {
     string_lit,
     open_Quote,
     closed_Quote,
-    _return
+    _return,
+    identifier,
+    equals
 };
 
 struct Token {

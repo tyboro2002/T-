@@ -14,7 +14,7 @@ void printProgram(const program& prog) {
 	for (const auto& codeLine : prog.codeLines) {
 		if (std::holds_alternative<NodeExit>(codeLine)) {
 			const NodeExit& exitNode = std::get<NodeExit>(codeLine);
-			std::cout << "NodeExit: expr = " << exitNode.expr.int_lit << std::endl;
+			std::cout << "NodeExit: expr = " << exitNode.expr.int_lit_Identif << std::endl;
 		}
 		else if (std::holds_alternative<NodePrint>(codeLine)) {
 			const NodePrint& printNode = std::get<NodePrint>(codeLine);
@@ -22,7 +22,22 @@ void printProgram(const program& prog) {
 		}
 		else if (std::holds_alternative<NodeReturn>(codeLine)) {
 			const NodeReturn& returnNode = std::get<NodeReturn>(codeLine);
-			std::cout << "NodeReturn: expr = " << returnNode.expr.int_lit << std::endl;
+			if (std::holds_alternative<NodeExpr>(returnNode.retVal)) {
+				const NodeExpr& returnExprNode = std::get<NodeExpr>(returnNode.retVal);
+				std::cout << "NodeReturn: expr = " << returnExprNode.int_lit_Identif << std::endl;
+			}
+			else if (std::holds_alternative<Token>(returnNode.retVal)) {
+				const Token& returnToken = std::get<Token>(returnNode.retVal);
+				if (returnToken.type == TokenType::string_lit) {
+					std::cout << "NodeReturn: str = \"" << returnToken.value.value() << "\"" << std::endl;
+				}
+			}
+		}else if (std::holds_alternative<NodeIdentifier>(codeLine)) {
+			const NodeIdentifier& identifierNode = std::get<NodeIdentifier>(codeLine);
+			std::cout << "NodeIdentifier: name = " << identifierNode.name << ", value = " << identifierNode.expr.int_lit_Identif.value.value() << std::endl;
+		}
+		else {
+			std::cout << "Node in print i dont know" << std::endl;
 		}
 	}
 }

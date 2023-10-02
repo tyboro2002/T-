@@ -4,11 +4,11 @@
 #include "Types.h"
 
 struct NodeExpr {
-	Token int_lit;
+	Token int_lit_Identif;
 };
 
 struct NodeReturn {
-	NodeExpr expr;
+	std::variant<NodeExpr, Token> retVal;
 };
 
 struct NodePrint {
@@ -19,8 +19,13 @@ struct NodeExit {
 	NodeExpr expr;
 };
 
+struct NodeIdentifier {
+	std::string name;
+	NodeExpr expr;
+};
+
 struct program {
-	std::vector<std::variant<NodeExit, NodePrint, NodeReturn>> codeLines;
+	std::vector<std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier>> codeLines;
 };
 
 class Parser {
@@ -37,6 +42,7 @@ private:
 	void parseCloseParen();
 	void parseOpenQuote();
 	void parseCloseQuote();
+	void parseEquals();
 	void parseSemi();
 	Token consume();
 };
