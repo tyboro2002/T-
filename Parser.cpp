@@ -144,7 +144,6 @@ NodeExit Parser::parseExit() {
 
 
 std::optional<NodeElse> Parser::parseOptionalElse() {
-	std::cout << "parsing else at token: " << peak().value() << std::endl;
 	NodeElse elseNode;
 	if (!peak().has_value() || peak().value().type != TokenType::_else) {
 		return {};
@@ -168,7 +167,6 @@ std::vector<NodeElif> Parser::parseElifs() {
 			parseOpenCurly();
 			elifNode.scope.codeLines = parseProgram();
 			parseCloseCurly();
-			std::cout << "parsing elif at token: " << peak().value() << std::endl;
 		}
 		else {
 			std::cerr << "invalid expresion!" << std::endl;
@@ -187,15 +185,11 @@ NodeIf Parser::parseIf() {
 		parseCloseParen();
 		parseOpenCurly();
 		ifNode = NodeIf{ .expr = node_expr.value(), .scope = parseProgram()};
-		std::cout << "after parsing if part found token: " << peak().value() << std::endl;
 		consume();
-		std::cout << "after consuming the closed curly found token: " << peak().value() << std::endl;
 		if (peak().has_value() && peak().value().type == TokenType::_elif) {
-			std::cout << "elif after consuming the closed curly found token: " << peak().value() << std::endl;
 			ifNode.elifs = parseElifs();
 		}
 		ifNode.elsePart = parseOptionalElse();
-		std::cout << "after parsing if found token: " << peak().value() << std::endl;
 	}
 	else {
 		std::cerr << "invalid expresion!" << std::endl;
@@ -233,6 +227,27 @@ std::vector<standAloneNode> Parser::parseProgram(){
 	return prog.codeLines;
 }
 
+Token Parser::parseStringLit() {
+	Token str;
+	parseOpenQuote();
+	if (peak().has_value() && peak().value().type == TokenType::string_lit) {
+		str = consume();
+	}
+	else {
+		std::cerr << "invalid string!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	parseCloseQuote();
+	return str;
+}
+
 std::optional<program> Parser::parse() {
-	return program{.codeLines = parseProgram()};
+	program prog;
+	while (peak().has_value() && peak().value().type == TokenType::_import) {
+		consume(); // consume the import
+		prog.imports.push_back(parseStringLit().value.value());
+		consume(); //consuming the semicoln
+	}
+	prog.codeLines = parseProgram();
+	return prog;
 }

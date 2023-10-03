@@ -96,6 +96,9 @@ std::string Generator::generate() {
 	std::stringstream out;
 	out << "#include <stdio.h>" << NewLine;
 	out << "#include <stdlib.h>" << NewLine << NewLine;
+	for (std::string& str : m_prog.imports) {
+		out << "#include <" << str << ">" << NewLine;
+	}
 	out << "int main() {" << NewLine;
 	out << generateCodeLines(m_prog.codeLines);
 	out << "    return 0;" << NewLine;

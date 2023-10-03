@@ -34,6 +34,10 @@ std::vector<Token> Tokenizer::tokenize() {
 				tokens.push_back({ .type = TokenType::_exit });
 				buf.clear();
 				continue;
+			}else if (buf == "import") {
+				tokens.push_back({ .type = TokenType::_import });
+				buf.clear();
+				continue;
 			}else if (buf == "return") {
 				tokens.push_back({ .type = TokenType::_return });
 				buf.clear();

@@ -1,0 +1,13 @@
+comments
+arithmetic expresions
+include
+
+scope objects:
+	functions
+	structs
+
+memory:
+	memaloc
+	calloc
+	realoc
+	free

@@ -24,7 +24,8 @@ enum class TokenType {
     closed_curly,
     _if,
     _else,
-    _elif
+    _elif,
+    _import
 };
 
 struct Token {

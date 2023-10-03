@@ -50,6 +50,7 @@ struct NodeIf {
 };
 
 struct program {
+	std::vector<std::string> imports;
 	std::vector<standAloneNode> codeLines;
 };
 
@@ -68,6 +69,7 @@ private:
 	NodeIdentifier parseIdentifier();
 	NodePrint parseSay();
 	NodeExit parseExit();
+	Token parseStringLit();
 	std::optional<NodeElse> parseOptionalElse();
 	std::vector<NodeElif> parseElifs();
 	NodeIf parseIf();
