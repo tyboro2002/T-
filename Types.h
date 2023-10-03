@@ -23,7 +23,8 @@ enum class TokenType {
     open_curly,
     closed_curly,
     _if,
-    _else
+    _else,
+    _elif
 };
 
 struct Token {

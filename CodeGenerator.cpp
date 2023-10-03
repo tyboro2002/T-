@@ -60,9 +60,29 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 			const NodeIf& ifNode = std::get<NodeIf>(variantNode);
 			out << "if (";
 			out << ifNode.expr.int_lit_Identif.value.value();
-			out << ")";
+			out << "){" << NewLine;
 			if (ifNode.scope.codeLines.size() > 0) {
 				out << generateCodeLines(ifNode.scope.codeLines);
+			}
+			out << "}";
+			if (ifNode.elifs.size() != 0) {
+				// Iterate over all elif's
+				for (const NodeElif& nodeElif : ifNode.elifs) {
+					out << "else if (";
+					out << nodeElif.expr.int_lit_Identif.value.value();
+					out << "){" << NewLine;
+					out << generateCodeLines(nodeElif.scope.codeLines);
+					out << "}" << NewLine;
+				}
+
+			}
+			if (ifNode.elsePart.has_value()) {
+				out << "else{" << NewLine;
+				out << generateCodeLines(ifNode.elsePart.value().scope.codeLines);
+				out << "}" << NewLine;
+			}
+			else {
+				out << NewLine;
 			}
 		}else {
 			std::cerr << "you did some bad formating" << std::endl;

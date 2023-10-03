@@ -33,10 +33,20 @@ struct NodeScope {
 	std::vector<standAloneNode> codeLines;
 };
 
+struct NodeElif {
+	NodeExpr expr;
+	NodeScope scope;
+};
+
+struct NodeElse {
+	NodeScope scope;
+};
+
 struct NodeIf {
 	NodeExpr expr;
 	NodeScope scope;
-	//std::optional<NodeIf> elsePart;
+	std::vector<NodeElif> elifs = {};
+	std::optional<NodeElse> elsePart;
 };
 
 struct program {
@@ -58,7 +68,8 @@ private:
 	NodeIdentifier parseIdentifier();
 	NodePrint parseSay();
 	NodeExit parseExit();
-	//std::optional<NodeIf> parseOptionalElseIfElse();
+	std::optional<NodeElse> parseOptionalElse();
+	std::vector<NodeElif> parseElifs();
 	NodeIf parseIf();
 	std::vector<standAloneNode> parseProgram();
 	void parseOpenParen();

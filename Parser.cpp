@@ -142,32 +142,42 @@ NodeExit Parser::parseExit() {
 	return exit_node;
 }
 
-/*
-std::optional<NodeIf> Parser::parseOptionalElseIfElse() {
-	NodeIf ifNode;
+
+std::optional<NodeElse> Parser::parseOptionalElse() {
+	std::cout << "parsing else at token: " << peak().value() << std::endl;
+	NodeElse elseNode;
 	if (!peak().has_value() || peak().value().type != TokenType::_else) {
 		return {};
 	}
-	consume(); //consume the if token
-	if (peak().has_value() && peak().value().type == TokenType::_if) {
+	consume(); // consume the else token
+	consume(); // consume the open curly
+	elseNode = NodeElse{ .scope = parseProgram() };
+	consume();
+	return elseNode;
+}
+
+std::vector<NodeElif> Parser::parseElifs() {
+	std::vector<NodeElif> elifs;
+	NodeElif elifNode;
+	while (peak().has_value() && peak().value().type == TokenType::_elif) {
+		consume(); // consume the elif
 		parseOpenParen();
 		if (auto node_expr = parse_expr()) {
+			elifNode.expr = node_expr.value();
 			parseCloseParen();
-
-			ifNode = NodeIf{ .expr = node_expr.value(), .scope = parseProgram(), .elsePart = parseOptionalElseIfElse()};
+			parseOpenCurly();
+			elifNode.scope.codeLines = parseProgram();
+			parseCloseCurly();
+			std::cout << "parsing elif at token: " << peak().value() << std::endl;
 		}
 		else {
 			std::cerr << "invalid expresion!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
-		return ifNode;
+		elifs.push_back(elifNode);
 	}
-	else {
-		ifNode = NodeIf{ .expr = NodeExpr{.int_lit_Identif = Token{.type = TokenType::int_lit, .value = "1"}}, .scope = parseProgram(), .elsePart = parseOptionalElseIfElse()};
-		return ifNode;
-	}
+	return elifs;
 }
-*/
 
 NodeIf Parser::parseIf() {
 	NodeIf ifNode;
@@ -175,7 +185,17 @@ NodeIf Parser::parseIf() {
 	parseOpenParen();
 	if (auto node_expr = parse_expr()) {
 		parseCloseParen();
-		ifNode = NodeIf{ .expr = node_expr.value(), .scope = parseProgram()/*, .elsePart = parseOptionalElseIfElse()*/};
+		parseOpenCurly();
+		ifNode = NodeIf{ .expr = node_expr.value(), .scope = parseProgram()};
+		std::cout << "after parsing if part found token: " << peak().value() << std::endl;
+		consume();
+		std::cout << "after consuming the closed curly found token: " << peak().value() << std::endl;
+		if (peak().has_value() && peak().value().type == TokenType::_elif) {
+			std::cout << "elif after consuming the closed curly found token: " << peak().value() << std::endl;
+			ifNode.elifs = parseElifs();
+		}
+		ifNode.elsePart = parseOptionalElse();
+		std::cout << "after parsing if found token: " << peak().value() << std::endl;
 	}
 	else {
 		std::cerr << "invalid expresion!" << std::endl;

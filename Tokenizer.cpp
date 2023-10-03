@@ -34,23 +34,27 @@ std::vector<Token> Tokenizer::tokenize() {
 				tokens.push_back({ .type = TokenType::_exit });
 				buf.clear();
 				continue;
-			}
-			else if (buf == "return") {
+			}else if (buf == "return") {
 				tokens.push_back({ .type = TokenType::_return });
 				buf.clear();
 				continue;
-			}
-			else if (buf == "say") {
+			}else if (buf == "say") {
 				tokens.push_back({ .type = TokenType::say });
 				buf.clear();
 				continue;
-			}
-			else if (buf == "if") {
+			}else if (buf == "if") {
 				tokens.push_back({ .type = TokenType::_if });
 				buf.clear();
 				continue;
-			}
-			else {
+			}else if (buf == "else") {
+				tokens.push_back({ .type = TokenType::_else });
+				buf.clear();
+				continue;
+			}else if (buf == "elif") {
+				tokens.push_back({ .type = TokenType::_elif });
+				buf.clear();
+				continue;
+			}else {
 				tokens.push_back({ .type = TokenType::identifier, .value = buf });
 				buf.clear();
 				continue;

@@ -35,6 +35,8 @@ std::string TokenTypeToString(TokenType type) {
         return "_if";
     case TokenType::_else:
         return "_else";
+    case TokenType::_elif:
+        return "_elif";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";
