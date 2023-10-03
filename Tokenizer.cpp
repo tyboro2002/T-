@@ -2,19 +2,42 @@
 
 using namespace std;
 
+#define COMMENT_CHAR '#'
+#define MULTILINE_COMMENT_FIRST_CHAR '/'
+#define MULTILINE_COMMENT_SECOND_CHAR '*'
+
 std::optional<char> Tokenizer::peak(int ahead) const {
 	if (m_index + ahead > m_src.size()) return {};
-	else return m_src.at(m_index); //TODO test why no +ahead here
+	else return m_src.at(m_index + ahead - 1);
 }
 
 char Tokenizer::consume() { return m_src.at(m_index++); }
+
+char Tokenizer::tryConsume(char karakter, std::string errorMessage) {
+	if (!peak().has_value() || peak().value() == karakter) {
+		std::cerr << errorMessage << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	return consume();
+}
 
 std::vector<Token> Tokenizer::tokenize() {
 	std::vector<Token> tokens{};
 	std::string buf{};
 	
 	while (peak().has_value()) {
-		if (peak().value() == '"') {
+		if (peak().value() == MULTILINE_COMMENT_FIRST_CHAR && peak(2).has_value() && peak(2).value() == MULTILINE_COMMENT_SECOND_CHAR) {
+			std::cout << "hey i found multiline comments" << std::endl;
+			while (peak().value() != MULTILINE_COMMENT_SECOND_CHAR || (peak(2).has_value() && peak(2).value() != MULTILINE_COMMENT_FIRST_CHAR)) {
+				consume();
+			}
+			consume(); // consume MULTILINE_COMMENT_SECOND_CHAR
+			consume(); // consume MULTILINE_COMMENT_FIRST_CHAR
+		}else if (peak().value() == COMMENT_CHAR) {
+			while (peak().has_value() && peak().value() != '\n' && peak().value() != '\r\n') {
+				consume();
+			}
+		}else if (peak().value() == '"') {
 			consume(); // consume the opening "
 			tokens.push_back({ .type = TokenType::open_Quote });
 			while (peak().has_value() && peak().value() != '"') {

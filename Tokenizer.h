@@ -14,4 +14,5 @@ public:
 private:
 	[[nodiscard]] std::optional<char> peak(int ahead = 1) const;
 	char consume();
+	char tryConsume(char karakter, std::string errorMessage);
 };

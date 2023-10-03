@@ -25,7 +25,7 @@ enum class TokenType {
     _if,
     _else,
     _elif,
-    _import
+    _import,
 };
 
 struct Token {

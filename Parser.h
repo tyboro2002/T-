@@ -64,6 +64,8 @@ public:
 	std::optional<program> parse();
 private:
 	[[nodiscard]] std::optional<Token> peak(int ahead = 1) const;
+	Token consume();
+	Token tryConsume(TokenType tokenType, std::string errorMessage);
 
 	NodeReturn parseReturn();
 	NodeIdentifier parseIdentifier();
@@ -82,5 +84,4 @@ private:
 	void parseCloseCurly();
 	void parseEquals();
 	void parseSemi();
-	Token consume();
 };

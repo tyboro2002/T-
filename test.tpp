@@ -1,4 +1,9 @@
 say ("hello world!, this is a tpp default program.\n");
+# hey this is al needed to be ignored
+/*
+	multiline
+	comment
+*/
 x = 5;
 b = x;
 x = 5;

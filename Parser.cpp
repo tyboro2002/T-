@@ -2,7 +2,7 @@
 
 std::optional<Token> Parser::peak(int ahead) const {
 	if (m_index + ahead > m_tokens.size()) return {};
-	else return m_tokens.at(m_index); //TODO test why no +ahead here
+	else return m_tokens.at(m_index + ahead - 1);
 }
 
 Token Parser::consume() { return m_tokens.at(m_index++);}
@@ -10,9 +10,9 @@ Token Parser::consume() { return m_tokens.at(m_index++);}
 std::optional<NodeExpr> Parser::parse_expr() {
 	std::optional<NodeExpr> expr_node;
 	if (peak().has_value() && peak().value().type == TokenType::int_lit) {
-		return NodeExpr{ .int_lit_Identif = consume() };
+		return NodeExpr{ .int_lit_Identif = tryConsume(TokenType::int_lit, "this int_lit disapeared")};
 	}else if (peak().has_value() && peak().value().type == TokenType::identifier) {
-		return NodeExpr{ .int_lit_Identif = consume() };
+		return NodeExpr{ .int_lit_Identif = tryConsume(TokenType::identifier, "this identifier disapeared")};
 	}else {
 		return {};
 	}
@@ -83,9 +83,17 @@ void Parser::parseSemi() {
 	consume(); //consume the semicoln
 }
 
+Token Parser::tryConsume(TokenType tokenType, std::string errorMessage) {
+	if (!peak().has_value() || peak().value().type != tokenType) {
+		std::cerr << errorMessage << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	return consume();
+}
+
 NodeReturn Parser::parseReturn(){
 	NodeReturn return_node;
-	consume(); //consume the return node
+	tryConsume(TokenType::_return, "expected return"); //consume the return node
 	parseOpenParen();
 	if (auto node_expr = parse_expr()) {
 		return_node = NodeReturn{ .retVal = node_expr.value() };
@@ -101,7 +109,7 @@ NodeReturn Parser::parseReturn(){
 
 NodeIdentifier Parser::parseIdentifier() {
 	NodeIdentifier identifier_node;
-	Token nameToken = consume();
+	Token nameToken = tryConsume(TokenType::identifier, "expected identifier");
 	parseEquals();
 	if (auto node_expr = parse_expr()) {
 		identifier_node = NodeIdentifier{ .name = nameToken.value.value(), .expr = node_expr.value() };
@@ -116,11 +124,11 @@ NodeIdentifier Parser::parseIdentifier() {
 
 NodePrint Parser::parseSay(){
 	NodePrint print_node;
-	consume();
+	tryConsume(TokenType::say, "expected say");
 	parseOpenParen();
 	parseOpenQuote();
 	if (peak().has_value() && peak().value().type == TokenType::string_lit) {
-		print_node = NodePrint{ .string_lit = consume() };
+		print_node = NodePrint{ .string_lit = tryConsume(TokenType::string_lit, "this string_lit disapeared")};
 	}
 	parseCloseQuote();
 	parseCloseParen();
@@ -130,7 +138,7 @@ NodePrint Parser::parseSay(){
 
 NodeExit Parser::parseExit() {
 	NodeExit exit_node;
-	consume(); //consume the exit node
+	tryConsume(TokenType::_exit, "expected exit"); //consume the exit node
 	if (auto node_expr = parse_expr()) {
 		exit_node = NodeExit{ .expr = node_expr.value() };
 	}
@@ -148,10 +156,10 @@ std::optional<NodeElse> Parser::parseOptionalElse() {
 	if (!peak().has_value() || peak().value().type != TokenType::_else) {
 		return {};
 	}
-	consume(); // consume the else token
-	consume(); // consume the open curly
+	tryConsume(TokenType::_else, "expected else"); // consume the else token
+	parseOpenCurly(); // consume the open curly
 	elseNode = NodeElse{ .scope = parseProgram() };
-	consume();
+	parseCloseCurly(); // consume the closed curly
 	return elseNode;
 }
 
@@ -159,7 +167,7 @@ std::vector<NodeElif> Parser::parseElifs() {
 	std::vector<NodeElif> elifs;
 	NodeElif elifNode;
 	while (peak().has_value() && peak().value().type == TokenType::_elif) {
-		consume(); // consume the elif
+		tryConsume(TokenType::_elif, "expected elif"); // consume the elif
 		parseOpenParen();
 		if (auto node_expr = parse_expr()) {
 			elifNode.expr = node_expr.value();
@@ -179,7 +187,7 @@ std::vector<NodeElif> Parser::parseElifs() {
 
 NodeIf Parser::parseIf() {
 	NodeIf ifNode;
-	consume(); //consume the if token
+	tryConsume(TokenType::_if, "expected if"); //consume the if token
 	parseOpenParen();
 	if (auto node_expr = parse_expr()) {
 		parseCloseParen();
@@ -205,7 +213,7 @@ std::vector<standAloneNode> Parser::parseProgram(){
 		if (peak().value().type == TokenType::closed_curly) {
 			return prog.codeLines;
 		}else if (peak().value().type == TokenType::open_curly) {
-			consume();
+			tryConsume(TokenType::open_curly, "this open curly disapeared");
 			prog.codeLines.push_back(NodeScope{ .codeLines = parseProgram() });
 			parseCloseCurly();
 		
@@ -231,7 +239,7 @@ Token Parser::parseStringLit() {
 	Token str;
 	parseOpenQuote();
 	if (peak().has_value() && peak().value().type == TokenType::string_lit) {
-		str = consume();
+		str = tryConsume(TokenType::string_lit, "this string_lit disapeared");
 	}
 	else {
 		std::cerr << "invalid string!" << std::endl;
@@ -244,9 +252,9 @@ Token Parser::parseStringLit() {
 std::optional<program> Parser::parse() {
 	program prog;
 	while (peak().has_value() && peak().value().type == TokenType::_import) {
-		consume(); // consume the import
+		tryConsume(TokenType::_import, "this import disapeared"); // consume the import
 		prog.imports.push_back(parseStringLit().value.value());
-		consume(); //consuming the semicoln
+		parseSemi(); //consuming the semicoln
 	}
 	prog.codeLines = parseProgram();
 	return prog;
