@@ -33,6 +33,24 @@ std::vector<Token> Tokenizer::tokenize() {
 			}
 			consume(); // consume MULTILINE_COMMENT_SECOND_CHAR
 			consume(); // consume MULTILINE_COMMENT_FIRST_CHAR
+		}else if (peak().value() == '=' && peak(2).has_value() && peak(2).value() == '=') {
+			consume(); // consume =
+			consume(); // consume =
+			tokens.push_back({ .type = TokenType::test_equal });
+		}else if (peak().value() == '!' && peak(2).has_value() && peak(2).value() == '=') {
+			consume(); // consume !
+			consume(); // consume =
+			tokens.push_back({ .type = TokenType::test_not_equal });
+		}
+		else if (peak().value() == '>' && peak(2).has_value() && peak(2).value() == '=') {
+			consume(); // consume >
+			consume(); // consume =
+			tokens.push_back({ .type = TokenType::test_equal_greater });
+		}
+		else if (peak().value() == '<' && peak(2).has_value() && peak(2).value() == '=') {
+			consume(); // consume <
+			consume(); // consume =
+			tokens.push_back({ .type = TokenType::test_equal_smaller });
 		}else if (peak().value() == COMMENT_CHAR) {
 			while (peak().has_value() && peak().value() != '\n' && peak().value() != '\r\n') {
 				consume();
@@ -63,6 +81,10 @@ std::vector<Token> Tokenizer::tokenize() {
 				continue;
 			}*/else if (buf == "return") {
 				tokens.push_back({ .type = TokenType::_return });
+				buf.clear();
+				continue;
+			}else if (buf == "request") {
+				tokens.push_back({ .type = TokenType::request });
 				buf.clear();
 				continue;
 			}else if (buf == "say") {
@@ -112,7 +134,14 @@ std::vector<Token> Tokenizer::tokenize() {
 		}else if (peak().value() == '=') {
 			tokens.push_back({ .type = TokenType::equals });
 			consume();
-		}else if (isspace(peak().value())) {
+		}else if (peak().value() == '<') {
+			tokens.push_back({ .type = TokenType::test_smaller });
+			consume();
+		}else if (peak().value() == '>') {
+			tokens.push_back({ .type = TokenType::test_greater });
+			consume();
+			}
+		else if (isspace(peak().value())) {
 			consume();
 			continue;
 		}else {

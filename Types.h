@@ -26,6 +26,13 @@ enum class TokenType {
     _else,
     _elif,
     _import,
+    request,
+    test_equal,
+    test_not_equal,
+    test_equal_greater,
+    test_equal_smaller,
+    test_greater,
+    test_smaller
 };
 
 struct Token {

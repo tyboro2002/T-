@@ -10,9 +10,9 @@ Token Parser::consume() { return m_tokens.at(m_index++);}
 std::optional<NodeExpr> Parser::parse_expr() {
 	std::optional<NodeExpr> expr_node;
 	if (peak().has_value() && peak().value().type == TokenType::int_lit) {
-		return NodeExpr{ .int_lit_Identif = tryConsume(TokenType::int_lit, "this int_lit disapeared")};
+		return NodeExpr{ .exprPart = tryConsume(TokenType::int_lit, "this int_lit disapeared")};
 	}else if (peak().has_value() && peak().value().type == TokenType::identifier) {
-		return NodeExpr{ .int_lit_Identif = tryConsume(TokenType::identifier, "this identifier disapeared")};
+		return NodeExpr{ .exprPart = tryConsume(TokenType::identifier, "this identifier disapeared")};
 	}else {
 		return {};
 	}
@@ -126,11 +126,16 @@ NodePrint Parser::parseSay(){
 	NodePrint print_node;
 	tryConsume(TokenType::say, "expected say");
 	parseOpenParen();
-	parseOpenQuote();
-	if (peak().has_value() && peak().value().type == TokenType::string_lit) {
-		print_node = NodePrint{ .string_lit = tryConsume(TokenType::string_lit, "this string_lit disapeared")};
+	if (peak().has_value() && peak().value().type == TokenType::identifier) {
+		print_node = NodePrint{ .string_lit_identifier = tryConsume(TokenType::identifier, "this identifier disapeared") };
 	}
-	parseCloseQuote();
+	else {
+		parseOpenQuote();
+		if (peak().has_value() && peak().value().type == TokenType::string_lit) {
+			print_node = NodePrint{ .string_lit_identifier = tryConsume(TokenType::string_lit, "this string_lit disapeared") };
+		}
+		parseCloseQuote();
+	}
 	parseCloseParen();
 	parseSemi();
 	return print_node;
@@ -170,7 +175,13 @@ std::vector<NodeElif> Parser::parseElifs() {
 		tryConsume(TokenType::_elif, "expected elif"); // consume the elif
 		parseOpenParen();
 		if (auto node_expr = parse_expr()) {
-			elifNode.expr = node_expr.value();
+			NodeExpr exprNodeLeft = node_expr.value();
+			if (auto node_test = parseTest(exprNodeLeft)) {
+				elifNode.expr = node_test.value();
+			}
+			else {
+				elifNode.expr = exprNodeLeft;
+			}
 			parseCloseParen();
 			parseOpenCurly();
 			elifNode.scope.codeLines = parseProgram();
@@ -190,21 +201,41 @@ NodeIf Parser::parseIf() {
 	tryConsume(TokenType::_if, "expected if"); //consume the if token
 	parseOpenParen();
 	if (auto node_expr = parse_expr()) {
-		parseCloseParen();
-		parseOpenCurly();
-		ifNode = NodeIf{ .expr = node_expr.value(), .scope = parseProgram()};
-		consume();
+		NodeExpr exprNodeLeft = node_expr.value();
+		if (auto node_test = parseTest(exprNodeLeft)) {
+			parseCloseParen();
+			parseOpenCurly();
+			ifNode = NodeIf{ .expr = node_test.value(), .scope = parseProgram()};
+		}
+		else {
+			parseCloseParen();
+			parseOpenCurly();
+			ifNode = NodeIf{ .expr = exprNodeLeft, .scope = parseProgram() };
+		}
+		parseCloseCurly();
 		if (peak().has_value() && peak().value().type == TokenType::_elif) {
 			ifNode.elifs = parseElifs();
 		}
 		ifNode.elsePart = parseOptionalElse();
 	}
-	else {
+	else{
 		std::cerr << "invalid expresion!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	return ifNode;
 }
+
+
+NodeInput Parser::parseInput() {
+	NodeInput nodeInp;
+	tryConsume(TokenType::request, "expected request");
+	parseOpenParen();
+	nodeInp.identifier = tryConsume(TokenType::identifier, "expected an identifier in the request");
+	parseCloseParen();
+	parseSemi();
+	return nodeInp;
+}
+
 
 std::vector<standAloneNode> Parser::parseProgram(){
 	program prog;
@@ -217,6 +248,8 @@ std::vector<standAloneNode> Parser::parseProgram(){
 			prog.codeLines.push_back(NodeScope{ .codeLines = parseProgram() });
 			parseCloseCurly();
 		
+		}else if (peak().value().type == TokenType::request) {
+			prog.codeLines.push_back(parseInput()); // Add the input node to the program
 		}else if (peak().value().type == TokenType::_exit) {
 			prog.codeLines.push_back(parseExit()); // Add the exit node to the program
 		}else if (peak().value().type == TokenType::say) {
@@ -226,7 +259,7 @@ std::vector<standAloneNode> Parser::parseProgram(){
 		}else if (peak().value().type == TokenType::identifier) {
 			prog.codeLines.push_back(parseIdentifier()); // Add the identifier node to the program
 		}else if (peak().value().type == TokenType::_if) {
-			prog.codeLines.push_back(parseIf()); // Add the identifier node to the program
+			prog.codeLines.push_back(parseIf()); // Add the if node to the program
 		}else {
 			std::cerr << "found a token i dont like here, namely: " << peak().value() << std::endl; //TODO add parsing for extra nodes
 			exit(EXIT_FAILURE);
@@ -247,6 +280,40 @@ Token Parser::parseStringLit() {
 	}
 	parseCloseQuote();
 	return str;
+}
+
+std::optional<NodeTest> Parser::parseTest(NodeExpr exprNodeLeft) {
+	NodeTest nodeTest;
+	nodeTest.left_expr = exprNodeLeft;
+	if (peak().has_value() && peak().value().type == TokenType::test_equal) {
+		consume();
+		nodeTest.test_expr = Token{ .type = TokenType::test_equal };
+	}else if (peak().has_value() && peak().value().type == TokenType::test_not_equal) {
+		consume();
+		nodeTest.test_expr = Token{ .type = TokenType::test_not_equal };
+	}else if (peak().has_value() && peak().value().type == TokenType::test_equal_greater) {
+		consume();
+		nodeTest.test_expr = Token{ .type = TokenType::test_equal_greater };
+	}else if (peak().has_value() && peak().value().type == TokenType::test_equal_smaller) {
+		consume();
+		nodeTest.test_expr = Token{ .type = TokenType::test_equal_smaller };
+	}else if (peak().has_value() && peak().value().type == TokenType::test_greater) {
+		consume();
+		nodeTest.test_expr = Token{ .type = TokenType::test_greater };
+	}else if (peak().has_value() && peak().value().type == TokenType::test_smaller) {
+		consume();
+		nodeTest.test_expr = Token{ .type = TokenType::test_smaller };
+	}else {
+		return {};
+	}
+	if (auto node_expr = parse_expr()) {
+		nodeTest.right_expr = node_expr.value();
+	}
+	else {
+		std::cerr << "expresion missing after: " << nodeTest.test_expr << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	return nodeTest;
 }
 
 std::optional<program> Parser::parse() {

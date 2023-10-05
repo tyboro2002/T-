@@ -3,11 +3,22 @@
 #include <vector>
 #include <variant>
 #include "Types.h"
+#include "arena.h"
 
-#define standAloneNode std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope, NodeIf>
+#define standAloneNode std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope, NodeIf, NodeInput>
 
 struct NodeExpr {
-	Token int_lit_Identif;
+	std::variant<Token> exprPart;
+};
+
+struct NodeTest {
+	NodeExpr left_expr;
+	Token test_expr;
+	NodeExpr right_expr;
+};
+
+struct NodeInput {
+	Token identifier;
 };
 
 struct NodeReturn {
@@ -15,7 +26,7 @@ struct NodeReturn {
 };
 
 struct NodePrint {
-	Token string_lit;
+	Token string_lit_identifier;
 };
 
 struct NodeExit {
@@ -34,7 +45,7 @@ struct NodeScope {
 };
 
 struct NodeElif {
-	NodeExpr expr;
+	std::variant<NodeExpr, NodeTest> expr;
 	NodeScope scope;
 };
 
@@ -43,7 +54,7 @@ struct NodeElse {
 };
 
 struct NodeIf {
-	NodeExpr expr;
+	std::variant<NodeExpr, NodeTest> expr;
 	NodeScope scope;
 	std::vector<NodeElif> elifs = {};
 	std::optional<NodeElse> elsePart;
@@ -57,9 +68,9 @@ struct program {
 class Parser {
 	const std::vector<Token> m_tokens;
 	int m_index;
-
+	ArenaAllocator m_allocator;
 public:
-	Parser(std::vector<Token> tokens) : m_tokens(std::move(tokens)), m_index(0) {}
+	Parser(std::vector<Token> tokens) : m_tokens(std::move(tokens)), m_index(0), m_allocator(1024*1024*4) {}
 	std::optional<NodeExpr> parse_expr();
 	std::optional<program> parse();
 private:
@@ -71,7 +82,9 @@ private:
 	NodeIdentifier parseIdentifier();
 	NodePrint parseSay();
 	NodeExit parseExit();
+	NodeInput parseInput();
 	Token parseStringLit();
+	std::optional<NodeTest> parseTest(NodeExpr exprNodeLeft);
 	std::optional<NodeElse> parseOptionalElse();
 	std::vector<NodeElif> parseElifs();
 	NodeIf parseIf();

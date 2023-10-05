@@ -9,22 +9,70 @@
 
 using namespace std;
 
+// Function to convert a NodeExpr to a string suitable for the << operator
+std::string convertNodeExpr(const NodeExpr node) {
+	std::stringstream ss;
+	if (std::holds_alternative<Token>(node.exprPart)) {
+		const Token& token = std::get<Token>(node.exprPart);
+		ss << token.value.value();
+	}
+	return ss.str();
+}
+
+// Function to convert a NodeExpr to a string suitable for the << operator
+std::string convertNodeExprOrNodeTest(std::variant<NodeExpr, NodeTest> node) {
+	std::stringstream ss;
+	if (std::holds_alternative<NodeExpr>(node)) {
+		const NodeExpr& expr_node = std::get<NodeExpr>(node);
+		ss << convertNodeExpr(expr_node);
+	}
+	else if (std::holds_alternative<NodeTest>(node)) {
+		const NodeTest& test_node = std::get<NodeTest>(node);
+		ss << convertNodeExpr(test_node.left_expr);
+
+		if (test_node.test_expr.type == TokenType::test_equal) {
+			ss << "==";
+		}
+		else if (test_node.test_expr.type == TokenType::test_not_equal) {
+			ss << "!=";
+		}
+		else if (test_node.test_expr.type == TokenType::test_equal_greater) {
+			ss << ">=";
+		}
+		else if (test_node.test_expr.type == TokenType::test_equal_smaller) {
+			ss << "<=";
+		}
+		else if (test_node.test_expr.type == TokenType::test_greater) {
+			ss << ">";
+		}
+		else if (test_node.test_expr.type == TokenType::test_smaller) {
+			ss << "<";
+		}
+		ss << convertNodeExpr(test_node.right_expr);
+	}
+	else {
+		std::cerr << "invalid type in expr or test!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	return ss.str();
+}
+
 void printProgram(const program& prog) {
 	std::cout << "Program:" << std::endl;
 	for (const auto& codeLine : prog.codeLines) {
 		if (std::holds_alternative<NodeExit>(codeLine)) {
 			const NodeExit& exitNode = std::get<NodeExit>(codeLine);
-			std::cout << "NodeExit: expr = " << exitNode.expr.int_lit_Identif << std::endl;
+			std::cout << "NodeExit: expr = " << convertNodeExpr(exitNode.expr) << std::endl;
 		}
 		else if (std::holds_alternative<NodePrint>(codeLine)) {
 			const NodePrint& printNode = std::get<NodePrint>(codeLine);
-			std::cout << "NodePrint: string_lit = " << printNode.string_lit << std::endl;
+			std::cout << "NodePrint: string_lit_identifier = " << printNode.string_lit_identifier << std::endl;
 		}
 		else if (std::holds_alternative<NodeReturn>(codeLine)) {
 			const NodeReturn& returnNode = std::get<NodeReturn>(codeLine);
 			if (std::holds_alternative<NodeExpr>(returnNode.retVal)) {
 				const NodeExpr& returnExprNode = std::get<NodeExpr>(returnNode.retVal);
-				std::cout << "NodeReturn: expr = " << returnExprNode.int_lit_Identif << std::endl;
+				std::cout << "NodeReturn: expr = " << convertNodeExpr(returnExprNode) << std::endl;
 			}
 			else if (std::holds_alternative<Token>(returnNode.retVal)) {
 				const Token& returnToken = std::get<Token>(returnNode.retVal);
@@ -34,10 +82,10 @@ void printProgram(const program& prog) {
 			}
 		}else if (std::holds_alternative<NodeIdentifier>(codeLine)) {
 			const NodeIdentifier& identifierNode = std::get<NodeIdentifier>(codeLine);
-			std::cout << "NodeIdentifier: name = " << identifierNode.name << ", value = " << identifierNode.expr.int_lit_Identif.value.value() << std::endl;
+			std::cout << "NodeIdentifier: name = " << identifierNode.name << ", value = " << convertNodeExpr(identifierNode.expr) << std::endl;
 		}else if (std::holds_alternative<NodeIf>(codeLine)) {
 			const NodeIf& ifNode = std::get<NodeIf>(codeLine);
-			std::cout << "ifNode: expr: " << ifNode.expr.int_lit_Identif.value.value() << std::endl;
+			std::cout << "ifNode: expr: " << convertNodeExprOrNodeTest(ifNode.expr) << std::endl;
 			std::cout << "scopeNode open: ";
 			printProgram(program{ .codeLines = ifNode.scope.codeLines});
 			std::cout << "scopeNode close" << std::endl;
@@ -46,6 +94,9 @@ void printProgram(const program& prog) {
 			std::cout << "scopeNode open: ";
 			printProgram(program{.codeLines = scopeNode.codeLines});
 			std::cout << "scopeNode close" << std::endl;
+		}else if (std::holds_alternative<NodeInput>(codeLine)) {
+			const NodeInput& inputNode = std::get<NodeInput>(codeLine);
+			std::cout << "NodeInput: identifier = " << inputNode.identifier.value.value() << std::endl;
 		}else {
 			std::cout << "Node in print i dont know" << std::endl;
 		}

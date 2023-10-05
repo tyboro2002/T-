@@ -15,4 +15,6 @@ public:
 	[[nodiscard]] std::string generate();
 private:
 	std::string generateCodeLines(std::vector<standAloneNode> codeLines);
+	std::string convertNodeExpr(const NodeExpr node);
+	std::string convertNodeExprOrNodeTest(std::variant<NodeExpr, NodeTest> node);
 };

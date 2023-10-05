@@ -39,6 +39,20 @@ std::string TokenTypeToString(TokenType type) {
         return "_elif";
     case TokenType::_import:
         return "_import";
+    case TokenType::request:
+        return "request";
+    case TokenType::test_equal:
+        return "test_equal";
+    case TokenType::test_not_equal:
+        return "test_not_equal";
+    case TokenType::test_equal_greater:
+        return "test_equal_greater";
+    case TokenType::test_equal_smaller:
+        return "test_equal_smaller";
+    case TokenType::test_greater:
+        return "test_greater";
+    case TokenType::test_smaller:
+        return "test_smaller";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";
