@@ -32,7 +32,8 @@ enum class TokenType {
     test_equal_greater,
     test_equal_smaller,
     test_greater,
-    test_smaller
+    test_smaller,
+    comma
 };
 
 struct Token {

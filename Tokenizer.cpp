@@ -140,8 +140,10 @@ std::vector<Token> Tokenizer::tokenize() {
 		}else if (peak().value() == '>') {
 			tokens.push_back({ .type = TokenType::test_greater });
 			consume();
-			}
-		else if (isspace(peak().value())) {
+		}else if (peak().value() == ',') {
+				tokens.push_back({ .type = TokenType::comma });
+				consume();
+		}else if (isspace(peak().value())) {
 			consume();
 			continue;
 		}else {

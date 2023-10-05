@@ -53,6 +53,8 @@ std::string TokenTypeToString(TokenType type) {
         return "test_greater";
     case TokenType::test_smaller:
         return "test_smaller";
+    case TokenType::comma:
+        return "comma";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

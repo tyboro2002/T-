@@ -3,14 +3,6 @@ loops:
 	doWhile
 	while
 
-comparison operators:
-	==
-	!=
-	>=
-	<=
-	<
-	>
-
 arithmetic expresions
 include (own files)
 
