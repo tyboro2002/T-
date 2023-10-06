@@ -5,10 +5,18 @@
 #include "Types.h"
 #include "arena.h"
 
-#define standAloneNode std::variant<NodeExit, NodePrint, NodeReturn, NodeIdentifier, NodeScope, NodeIf, NodeInput>
+#define standAloneNode std::variant<NodeExit, NodeSay, NodeShout, NodeReturn, NodeIdentifier, NodeScope, NodeIf, NodeInput, NodeVarDump>
+/**
+struct NodeTppInp {
+	int number;
+};
+*/
+struct NodeVarDump {
+	Token str_lit;
+};
 
 struct NodeExpr {
-	std::variant<Token> exprPart;
+	std::variant<Token/*, NodeTppInp*/> exprPart;
 };
 
 struct NodeTest {
@@ -25,7 +33,11 @@ struct NodeReturn {
 	std::variant<NodeExpr, Token> retVal;
 };
 
-struct NodePrint {
+struct NodeSay {
+	Token string_lit_identifier;
+};
+
+struct NodeShout {
 	Token string_lit_identifier;
 };
 
@@ -78,12 +90,15 @@ private:
 	Token consume();
 	Token tryConsume(TokenType tokenType, std::string errorMessage);
 
+	NodeVarDump parseVarDump();
 	NodeReturn parseReturn();
 	NodeIdentifier parseIdentifier();
-	NodePrint parseSay();
+	NodeSay parseSay();
+	NodeShout parseShout();
 	NodeExit parseExit();
 	NodeInput parseInput();
 	Token parseStringLit();
+	//NodeTppInp parseTppInp();
 	std::optional<NodeTest> parseTest(NodeExpr exprNodeLeft);
 	std::optional<NodeElse> parseOptionalElse();
 	std::vector<NodeElif> parseElifs();

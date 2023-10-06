@@ -13,7 +13,9 @@ std::optional<NodeExpr> Parser::parse_expr() {
 		return NodeExpr{ .exprPart = tryConsume(TokenType::int_lit, "this int_lit disapeared")};
 	}else if (peak().has_value() && peak().value().type == TokenType::identifier) {
 		return NodeExpr{ .exprPart = tryConsume(TokenType::identifier, "this identifier disapeared")};
-	}else {
+	}/*else if (peak().has_value() && peak().value().type == TokenType::tppinp) {
+		return NodeExpr{ .exprPart = parseTppInp()};
+	}*/else {
 		return {};
 	}
 	return expr_node;
@@ -122,17 +124,37 @@ NodeIdentifier Parser::parseIdentifier() {
 	return identifier_node;
 }
 
-NodePrint Parser::parseSay(){
-	NodePrint print_node;
+NodeSay Parser::parseSay(){
+	NodeSay print_node;
 	tryConsume(TokenType::say, "expected say");
 	parseOpenParen();
 	if (peak().has_value() && peak().value().type == TokenType::identifier) {
-		print_node = NodePrint{ .string_lit_identifier = tryConsume(TokenType::identifier, "this identifier disapeared") };
+		print_node = NodeSay{ .string_lit_identifier = tryConsume(TokenType::identifier, "this identifier disapeared") };
 	}
 	else {
 		parseOpenQuote();
 		if (peak().has_value() && peak().value().type == TokenType::string_lit) {
-			print_node = NodePrint{ .string_lit_identifier = tryConsume(TokenType::string_lit, "this string_lit disapeared") };
+			print_node = NodeSay{ .string_lit_identifier = tryConsume(TokenType::string_lit, "this string_lit disapeared") };
+		}
+		parseCloseQuote();
+	}
+	parseCloseParen();
+	parseSemi();
+	return print_node;
+}
+
+
+NodeShout Parser::parseShout() {
+	NodeShout print_node;
+	tryConsume(TokenType::shout, "expected shout");
+	parseOpenParen();
+	if (peak().has_value() && peak().value().type == TokenType::identifier) {
+		print_node = NodeShout{ .string_lit_identifier = tryConsume(TokenType::identifier, "this identifier disapeared") };
+	}
+	else {
+		parseOpenQuote();
+		if (peak().has_value() && peak().value().type == TokenType::string_lit) {
+			print_node = NodeShout{ .string_lit_identifier = tryConsume(TokenType::string_lit, "this string_lit disapeared") };
 		}
 		parseCloseQuote();
 	}
@@ -236,6 +258,30 @@ NodeInput Parser::parseInput() {
 	return nodeInp;
 }
 
+NodeVarDump Parser::parseVarDump() {
+	NodeVarDump nodeVarDump;
+	tryConsume(TokenType::var_dump, "expected var_dump");
+	parseOpenParen();
+	parseOpenQuote();
+	nodeVarDump.str_lit = tryConsume(TokenType::string_lit, "expected a string lit");
+	parseCloseQuote();
+	parseCloseParen();
+	parseSemi();
+	return nodeVarDump;
+}
+
+/*
+NodeTppInp Parser::parseTppInp() {
+	NodeTppInp nodeTppInp;
+	tryConsume(TokenType::tppinp, "expected tppInp");
+	parseOpenParen();
+	nodeTppInp.number = std::stoi(tryConsume(TokenType::int_lit, "expected a int lit").value.value());
+	parseCloseParen();
+	parseSemi();
+	return nodeTppInp;
+}
+*/
+
 
 std::vector<standAloneNode> Parser::parseProgram(){
 	program prog;
@@ -253,13 +299,17 @@ std::vector<standAloneNode> Parser::parseProgram(){
 		}else if (peak().value().type == TokenType::_exit) {
 			prog.codeLines.push_back(parseExit()); // Add the exit node to the program
 		}else if (peak().value().type == TokenType::say) {
-			prog.codeLines.push_back(parseSay()); // Add the print node to the program
+			prog.codeLines.push_back(parseSay()); // Add the say node to the program
+		}else if (peak().value().type == TokenType::shout) {
+			prog.codeLines.push_back(parseShout()); // Add the shout node to the program
 		}else if (peak().value().type == TokenType::_return) {
 			prog.codeLines.push_back(parseReturn()); // Add the return node to the program
 		}else if (peak().value().type == TokenType::identifier) {
 			prog.codeLines.push_back(parseIdentifier()); // Add the identifier node to the program
 		}else if (peak().value().type == TokenType::_if) {
 			prog.codeLines.push_back(parseIf()); // Add the if node to the program
+		}else if (peak().value().type == TokenType::var_dump) {
+			prog.codeLines.push_back(parseVarDump()); // Add the varDump node to the program
 		}else {
 			std::cerr << "found a token i dont like here, namely: " << peak().value() << std::endl; //TODO add parsing for extra nodes
 			exit(EXIT_FAILURE);

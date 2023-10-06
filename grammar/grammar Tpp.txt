@@ -1,7 +1,18 @@
+() read as variant
+[] read as list
+?? read as optional
+
 Expr -> (int_lit / identifier)
 Return -> (Expr / string_lit)
-print -> string_lit
+say -> string_lit
+shout -> string_lit
 Exit -> Expr
 Identifier -> string + Expr
-Scope -> [(Exit/Print/Return/Identifier/Scope)]
-program -> [(Exit/Print/Return/Identifier/Scope)]
+vardump -> string_lit
+input -> identifier
+if -> (expr/test) + scope + [elif] + ?else?
+elif -> (expr/test) + scope
+else -> scope
+test -> expr + testToken + expr
+Scope -> [(Exit/say/Return/Identifier/shout/Scope/if/input/vardump)]
+program -> [(Exit/say/Return/Identifier/shout/Scope/if/input/vardump)]

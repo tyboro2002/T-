@@ -8,7 +8,10 @@ std::string Generator::convertNodeExpr(const NodeExpr node) {
 	if (std::holds_alternative<Token>(node.exprPart)) {
 		const Token& token = std::get<Token>(node.exprPart);
 		ss << token.value.value();
-	}
+	}/*else if (std::holds_alternative<NodeTppInp>(node.exprPart)) {
+		const NodeTppInp& tppInp = std::get<NodeTppInp>(node.exprPart);
+		ss << "argv[" << tppInp.number << "]";
+	}*/
 	return ss.str();
 }
 
@@ -73,11 +76,19 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 					exit(EXIT_FAILURE);
 				}
 			}
-		}else if (std::holds_alternative<NodePrint>(variantNode)) {
-			const NodePrint& printNode = std::get<NodePrint>(variantNode);
+		}else if (std::holds_alternative<NodeSay>(variantNode)) {
+			const NodeSay& printNode = std::get<NodeSay>(variantNode);
+			if (printNode.string_lit_identifier.type == TokenType::string_lit) {
+				out << "	printf(\"" << printNode.string_lit_identifier.value.value() << "\");" << NewLine;
+			}else if (printNode.string_lit_identifier.type == TokenType::identifier) {
+				out << "	printf(\"%d\"," << printNode.string_lit_identifier.value.value() << "\);" << NewLine;
+			}
+		}else if (std::holds_alternative<NodeShout>(variantNode)) {
+			const NodeShout& printNode = std::get<NodeShout>(variantNode);
 			if (printNode.string_lit_identifier.type == TokenType::string_lit) {
 				out << "	printf(\"" << printNode.string_lit_identifier.value.value() << "\\n\");" << NewLine;
-			}else if (printNode.string_lit_identifier.type == TokenType::identifier) {
+			}
+			else if (printNode.string_lit_identifier.type == TokenType::identifier) {
 				out << "	printf(\"%d\\n\"," << printNode.string_lit_identifier.value.value() << "\);" << NewLine;
 			}
 		}else if (std::holds_alternative<NodeIdentifier>(variantNode)) {
@@ -136,6 +147,12 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 		}else if (std::holds_alternative<NodeInput>(variantNode)) {
 			const NodeInput& inputNode = std::get<NodeInput>(variantNode);
 			out << "	scanf(\"%d\",&" << inputNode.identifier.value.value() << ");" << NewLine;
+		}else if (std::holds_alternative<NodeVarDump>(variantNode)) {
+			const NodeVarDump& varDumpNode = std::get<NodeVarDump>(variantNode);
+			out << "	printf(\"data dump of variables: (" << varDumpNode.str_lit.value.value() << ") \\n\");" << NewLine;
+			for (std::string str : m_defined_variabels) {
+				out << "	printf(\"the variable " << str << " contains: %d\\n\"," << str << ");" << NewLine;
+			}
 		}else {
 			std::cerr << "you did some bad formating" << std::endl;
 			exit(EXIT_FAILURE);
@@ -151,7 +168,7 @@ std::string Generator::generate() {
 	for (std::string& str : m_prog.imports) {
 		out << "#include <" << str << ">" << NewLine;
 	}
-	out << "int main() {" << NewLine;
+	out << "int main( int argc, char* argv[]) {" << NewLine;
 	out << generateCodeLines(m_prog.codeLines);
 	out << "    return 0;" << NewLine;
 	out << "}";

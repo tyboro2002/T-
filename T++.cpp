@@ -63,12 +63,13 @@ void printProgram(const program& prog) {
 		if (std::holds_alternative<NodeExit>(codeLine)) {
 			const NodeExit& exitNode = std::get<NodeExit>(codeLine);
 			std::cout << "NodeExit: expr = " << convertNodeExpr(exitNode.expr) << std::endl;
-		}
-		else if (std::holds_alternative<NodePrint>(codeLine)) {
-			const NodePrint& printNode = std::get<NodePrint>(codeLine);
-			std::cout << "NodePrint: string_lit_identifier = " << printNode.string_lit_identifier << std::endl;
-		}
-		else if (std::holds_alternative<NodeReturn>(codeLine)) {
+		}else if (std::holds_alternative<NodeSay>(codeLine)) {
+			const NodeSay& printNode = std::get<NodeSay>(codeLine);
+			std::cout << "NodeSay: string_lit_identifier = " << printNode.string_lit_identifier << std::endl;
+		}else if (std::holds_alternative<NodeShout>(codeLine)) {
+			const NodeShout& printNode = std::get<NodeShout>(codeLine);
+			std::cout << "NodeSchout: string_lit_identifier = " << printNode.string_lit_identifier << std::endl;
+		}else if (std::holds_alternative<NodeReturn>(codeLine)) {
 			const NodeReturn& returnNode = std::get<NodeReturn>(codeLine);
 			if (std::holds_alternative<NodeExpr>(returnNode.retVal)) {
 				const NodeExpr& returnExprNode = std::get<NodeExpr>(returnNode.retVal);
@@ -104,8 +105,9 @@ void printProgram(const program& prog) {
 }
 
 int main(int argc, char* argv[]) {
-	if (argc != 2) {
-		cerr << "Incorrect usage. Correct usage is ..." << endl;
+	if (argc != 3 && argc != 2) {
+		cerr << "Incorrect usage. Correct usage is one of following ..." << endl;
+		cerr << "T++ <input.tpp> <output.exe>" << endl;
 		cerr << "T++ <input.tpp>" << endl;
 		return EXIT_FAILURE;
 	}
@@ -143,14 +145,30 @@ int main(int argc, char* argv[]) {
 	outputFile << cCode;
 	outputFile.close();
 
-	// Compile the generated C code using a C++ compiler (e.g., g++)
-	//int compileStatus = std::system("gcc -mconsole ../../../comp/generated_code.c -o ../../../comp/output_program.exe");
-	//int compileStatus = std::system("cd ../../../comp & dir & echo \"file contents:\" & type generated_code.c & gcc -mconsole generated_code.c -o output_program.exe");
-	int compileStatus = std::system("cd ../../../comp & echo . & echo \"file contents:\" & type generated_code.c & gcc -mconsole generated_code.c -o output_program.exe");
+	// Compile the generated C code using a C compiler (e.g., gcc)
+	int compileStatus = std::system("cd ../../../comp & echo . & echo \"file contents:\" & type generated_code.c & gcc -mconsole generated_code.c -o ../output/output_program.exe");
+
+	/*
+	std::fstream inputCopy("output_program.exe", std::ios::in);
+	std::stringstream contents_streamCopy;
+	contents_streamCopy << inputCopy.rdbuf();
+
+
+	std::ofstream outputFileCopy(argv[2]);
+	outputFileCopy << inputCopy.rdbuf();
+
+	inputCopy.close();
+	outputFileCopy.close();
+	*/
 
 	std::cout << std::endl;
 	if (compileStatus == 0) {
-		std::cout << "Compilation successful. Executable: 'output_program'" << std::endl;
+		if (argc == 3) {
+			std::cout << "Compilation successful. Executable: '" << argv[2] << "'" << std::endl;
+		}
+		else {
+			std::cout << "Compilation successful. Executable: 'output_program'" << std::endl;
+		}
 	}
 	else {
 		std::cerr << "Compilation failed." << std::endl;

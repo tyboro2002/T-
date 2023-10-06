@@ -17,6 +17,8 @@ std::string TokenTypeToString(TokenType type) {
         return "closed_Paren";
     case TokenType::say:
         return "say";
+    case TokenType::shout:
+        return "shout";
     case TokenType::open_Quote:
         return "open_Quote";
     case TokenType::closed_Quote:
@@ -55,6 +57,10 @@ std::string TokenTypeToString(TokenType type) {
         return "test_smaller";
     case TokenType::comma:
         return "comma";
+    case TokenType::var_dump:
+        return "var_dump";
+    //case TokenType::tppinp:
+    //    return "tppInp";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

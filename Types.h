@@ -14,6 +14,7 @@ enum class TokenType {
     open_Paren,
     closed_Paren,
     say,
+    shout,
     string_lit,
     open_Quote,
     closed_Quote,
@@ -33,7 +34,9 @@ enum class TokenType {
     test_equal_smaller,
     test_greater,
     test_smaller,
-    comma
+    comma,
+    var_dump,
+    //tppinp
 };
 
 struct Token {

@@ -27,6 +27,8 @@ std::vector<Token> Tokenizer::tokenize() {
 	
 	while (peak().has_value()) {
 		if (peak().value() == MULTILINE_COMMENT_FIRST_CHAR && peak(2).has_value() && peak(2).value() == MULTILINE_COMMENT_SECOND_CHAR) {
+			consume(); // consume MULTILINE_COMMENT_FIRST_CHAR
+			consume(); // consume MULTILINE_COMMENT_SECOND_CHAR
 			std::cout << "hey i found multiline comments" << std::endl;
 			while (peak().value() != MULTILINE_COMMENT_SECOND_CHAR || (peak(2).has_value() && peak(2).value() != MULTILINE_COMMENT_FIRST_CHAR)) {
 				consume();
@@ -91,6 +93,10 @@ std::vector<Token> Tokenizer::tokenize() {
 				tokens.push_back({ .type = TokenType::say });
 				buf.clear();
 				continue;
+			}else if (buf == "shout") {
+				tokens.push_back({ .type = TokenType::shout });
+				buf.clear();
+				continue;
 			}else if (buf == "if") {
 				tokens.push_back({ .type = TokenType::_if });
 				buf.clear();
@@ -99,11 +105,20 @@ std::vector<Token> Tokenizer::tokenize() {
 				tokens.push_back({ .type = TokenType::_else });
 				buf.clear();
 				continue;
-			}else if (buf == "elif") {
+			}
+			else if (buf == "elif") {
 				tokens.push_back({ .type = TokenType::_elif });
 				buf.clear();
 				continue;
-			}else {
+			}else if (buf == "dumpVar") {
+				tokens.push_back({ .type = TokenType::var_dump });
+				buf.clear();
+				continue;
+			}/*else if (buf == "tppInp") {
+				tokens.push_back({ .type = TokenType::tppinp });
+				buf.clear();
+				continue;
+			}*/else {
 				tokens.push_back({ .type = TokenType::identifier, .value = buf });
 				buf.clear();
 				continue;
