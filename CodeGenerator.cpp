@@ -7,11 +7,40 @@ std::string Generator::convertNodeExpr(const NodeExpr node) {
 	std::stringstream ss;
 	if (std::holds_alternative<Token>(node.exprPart)) {
 		const Token& token = std::get<Token>(node.exprPart);
-		ss << token.value.value();
-	}/*else if (std::holds_alternative<NodeTppInp>(node.exprPart)) {
+		if (token.type == TokenType::string_lit) {
+			ss << "\"" << token.value.value() << "\"";
+		}else if (token.type == TokenType::tppcount) {
+			ss << "argc";
+		}else {
+			ss << token.value.value();
+		}
+	}else if (std::holds_alternative<NodeTppInp>(node.exprPart)) {
 		const NodeTppInp& tppInp = std::get<NodeTppInp>(node.exprPart);
 		ss << "argv[" << tppInp.number << "]";
-	}*/
+	}
+	return ss.str();
+}
+
+std::string convertTest(Token test) {
+	std::stringstream ss;
+	if (test.type == TokenType::test_equal) {
+		ss << " == ";
+	}
+	else if (test.type == TokenType::test_not_equal) {
+		ss << " != ";
+	}
+	else if (test.type == TokenType::test_equal_greater) {
+		ss << " >= ";
+	}
+	else if (test.type == TokenType::test_equal_smaller) {
+		ss << " <= ";
+	}
+	else if (test.type == TokenType::test_greater) {
+		ss << " > ";
+	}
+	else if (test.type == TokenType::test_smaller) {
+		ss << " < ";
+	}
 	return ss.str();
 }
 
@@ -24,26 +53,21 @@ std::string Generator::convertNodeExprOrNodeTest(std::variant<NodeExpr, NodeTest
 	}
 	else if (std::holds_alternative<NodeTest>(node)) {
 		const NodeTest& test_node = std::get<NodeTest>(node);
+		if (std::holds_alternative<Token>(test_node.right_expr.exprPart)) {
+			const Token& token = std::get<Token>(test_node.right_expr.exprPart);
+			if (token.type == TokenType::string_lit) {
+				ss << "strcmp(";
+				ss << convertNodeExpr(test_node.left_expr);
+				ss << ",";
+				ss << convertNodeExpr(test_node.right_expr);
+				ss << ")";
+				ss << convertTest(test_node.test_expr);
+				ss << "0";
+				return ss.str();
+			}
+		}
 		ss << convertNodeExpr(test_node.left_expr);
-
-		if (test_node.test_expr.type == TokenType::test_equal) {
-			ss << " == ";
-		}
-		else if (test_node.test_expr.type == TokenType::test_not_equal) {
-			ss << " != ";
-		}
-		else if (test_node.test_expr.type == TokenType::test_equal_greater) {
-			ss << " >= ";
-		}
-		else if (test_node.test_expr.type == TokenType::test_equal_smaller) {
-			ss << " <= ";
-		}
-		else if (test_node.test_expr.type == TokenType::test_greater) {
-			ss << " > ";
-		}
-		else if (test_node.test_expr.type == TokenType::test_smaller) {
-			ss << " < ";
-		}
+		ss << convertTest(test_node.test_expr);
 		ss << convertNodeExpr(test_node.right_expr);
 	}
 	else {
@@ -164,6 +188,7 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 std::string Generator::generate() {
 	std::stringstream out;
 	out << "#include <stdio.h>" << NewLine;
+	out << "#include <string.h>" << NewLine;
 	out << "#include <stdlib.h>" << NewLine << NewLine;
 	for (std::string& str : m_prog.imports) {
 		out << "#include <" << str << ">" << NewLine;

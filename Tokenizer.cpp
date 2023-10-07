@@ -61,6 +61,10 @@ std::vector<Token> Tokenizer::tokenize() {
 			consume(); // consume the opening "
 			tokens.push_back({ .type = TokenType::open_Quote });
 			while (peak().has_value() && peak().value() != '"') {
+				if (peak().value() == '\\') {
+					buf.push_back(consume());
+					buf.push_back(consume());
+				}
 				buf.push_back(consume());
 			}
 			consume(); // consume the closing "
@@ -73,7 +77,7 @@ std::vector<Token> Tokenizer::tokenize() {
 				buf.push_back(consume());
 			}
 
-			if (buf == "exit") {
+			if (buf == EXIT) {
 				tokens.push_back({ .type = TokenType::_exit });
 				buf.clear();
 				continue;
@@ -114,11 +118,15 @@ std::vector<Token> Tokenizer::tokenize() {
 				tokens.push_back({ .type = TokenType::var_dump });
 				buf.clear();
 				continue;
-			}/*else if (buf == "tppInp") {
+			}else if (buf == "tppInp") {
 				tokens.push_back({ .type = TokenType::tppinp });
 				buf.clear();
 				continue;
-			}*/else {
+			}else if (buf == "tppCount") {
+				tokens.push_back({ .type = TokenType::tppcount });
+				buf.clear();
+				continue;
+			}else {
 				tokens.push_back({ .type = TokenType::identifier, .value = buf });
 				buf.clear();
 				continue;

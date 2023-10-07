@@ -5,7 +5,12 @@
 #include <optional>
 #include <vector>
 
+//administrative define's
 #define NewLine "\n"
+
+//define's defining the keywords
+#define EXIT "exit"
+
 
 enum class TokenType {
     _exit,
@@ -36,7 +41,8 @@ enum class TokenType {
     test_smaller,
     comma,
     var_dump,
-    //tppinp
+    tppinp,
+    tppcount
 };
 
 struct Token {

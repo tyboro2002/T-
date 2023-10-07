@@ -9,13 +9,21 @@ Token Parser::consume() { return m_tokens.at(m_index++);}
 
 std::optional<NodeExpr> Parser::parse_expr() {
 	std::optional<NodeExpr> expr_node;
-	if (peak().has_value() && peak().value().type == TokenType::int_lit) {
+	//std::cout << "token is: " << peak().value() << std::endl;
+	if (peak().has_value() && peak().value().type == TokenType::tppcount) {
+		return NodeExpr{ .exprPart = tryConsume(TokenType::tppcount, "this tppCount disapeared") };
+	}else if (peak().has_value() && peak().value().type == TokenType::int_lit) {
 		return NodeExpr{ .exprPart = tryConsume(TokenType::int_lit, "this int_lit disapeared")};
+	}else if (peak().has_value() && peak().value().type == TokenType::open_Quote) {
+		tryConsume(TokenType::open_Quote, "expected open quote");
+		expr_node = NodeExpr{ .exprPart = tryConsume(TokenType::string_lit, "this string_lit disapeared") };
+		tryConsume(TokenType::closed_Quote, "expected closing quote");
+		return expr_node;
 	}else if (peak().has_value() && peak().value().type == TokenType::identifier) {
 		return NodeExpr{ .exprPart = tryConsume(TokenType::identifier, "this identifier disapeared")};
-	}/*else if (peak().has_value() && peak().value().type == TokenType::tppinp) {
+	}else if (peak().has_value() && peak().value().type == TokenType::tppinp) {
 		return NodeExpr{ .exprPart = parseTppInp()};
-	}*/else {
+	}else {
 		return {};
 	}
 	return expr_node;
@@ -23,7 +31,12 @@ std::optional<NodeExpr> Parser::parse_expr() {
 
 void Parser::parseOpenParen() {
 	if (!peak().has_value() || peak().value().type != TokenType::open_Paren) {
-		std::cerr << "expecting (" << std::endl;
+		if (peak().has_value()) {
+			std::cerr << "expected ( and found " << peak().value() << std::endl;
+		}
+		else {
+			std::cerr << "expected ( and found nothing" << std::endl;
+		}
 		exit(EXIT_FAILURE);
 	}
 	consume();
@@ -31,7 +44,12 @@ void Parser::parseOpenParen() {
 
 void Parser::parseCloseParen() {
 	if (!peak().has_value() || peak().value().type != TokenType::closed_Paren) {
-		std::cerr << "expecting )" << std::endl;
+		if (peak().has_value()) {
+			std::cerr << "expected ) and found " << peak().value() << " after " << peak(0).value()  << " at index " << m_index << std::endl;
+		}
+		else {
+			std::cerr << "expected ) and found nothing" << std::endl;
+		}
 		exit(EXIT_FAILURE);
 	}
 	consume();
@@ -55,7 +73,12 @@ void Parser::parseCloseQuote() {
 
 void Parser::parseOpenCurly() {
 	if (!peak().has_value() || peak().value().type != TokenType::open_curly) {
-		std::cerr << "expected {" << std::endl;
+		if (peak().has_value()) {
+			std::cerr << "expected { and found " << peak().value() << std::endl;
+		}
+		else {
+			std::cerr << "expected { and found nothing" << std::endl;
+		}
 		exit(EXIT_FAILURE);
 	}
 	consume();
@@ -101,7 +124,7 @@ NodeReturn Parser::parseReturn(){
 		return_node = NodeReturn{ .retVal = node_expr.value() };
 	}
 	else {
-		std::cerr << "invalid expresion!" << std::endl;
+		std::cerr << "invalid expresion encouterd in return!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	parseCloseParen();
@@ -117,7 +140,7 @@ NodeIdentifier Parser::parseIdentifier() {
 		identifier_node = NodeIdentifier{ .name = nameToken.value.value(), .expr = node_expr.value() };
 	}
 	else {
-		std::cerr << "invalid expresion!" << std::endl;
+		std::cerr << "invalid expresion encounterd in identifier!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	parseSemi();
@@ -166,13 +189,15 @@ NodeShout Parser::parseShout() {
 NodeExit Parser::parseExit() {
 	NodeExit exit_node;
 	tryConsume(TokenType::_exit, "expected exit"); //consume the exit node
+	parseOpenParen();
 	if (auto node_expr = parse_expr()) {
 		exit_node = NodeExit{ .expr = node_expr.value() };
 	}
 	else {
-		std::cerr << "invalid expresion!" << std::endl;
+		std::cerr << "invalid expresion encounterd in exit!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	parseCloseParen();
 	parseSemi();
 	return exit_node;
 }
@@ -210,7 +235,7 @@ std::vector<NodeElif> Parser::parseElifs() {
 			parseCloseCurly();
 		}
 		else {
-			std::cerr << "invalid expresion!" << std::endl;
+			std::cerr << "invalid expresion encounterd in elif!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		elifs.push_back(elifNode);
@@ -241,7 +266,7 @@ NodeIf Parser::parseIf() {
 		ifNode.elsePart = parseOptionalElse();
 	}
 	else{
-		std::cerr << "invalid expresion!" << std::endl;
+		std::cerr << "invalid expresion encounterd in if!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	return ifNode;
@@ -270,17 +295,16 @@ NodeVarDump Parser::parseVarDump() {
 	return nodeVarDump;
 }
 
-/*
+
 NodeTppInp Parser::parseTppInp() {
 	NodeTppInp nodeTppInp;
 	tryConsume(TokenType::tppinp, "expected tppInp");
 	parseOpenParen();
 	nodeTppInp.number = std::stoi(tryConsume(TokenType::int_lit, "expected a int lit").value.value());
 	parseCloseParen();
-	parseSemi();
 	return nodeTppInp;
 }
-*/
+
 
 
 std::vector<standAloneNode> Parser::parseProgram(){

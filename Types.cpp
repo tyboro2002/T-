@@ -59,8 +59,10 @@ std::string TokenTypeToString(TokenType type) {
         return "comma";
     case TokenType::var_dump:
         return "var_dump";
-    //case TokenType::tppinp:
-    //    return "tppInp";
+    case TokenType::tppinp:
+        return "tppInp";
+    case TokenType::tppcount:
+        return "tppCount";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

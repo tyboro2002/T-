@@ -16,6 +16,5 @@ memory:
 	realoc
 	free
 
-command line input:
-	#argv[i] for var i
-	#argc for count
+make manPages for:
+    

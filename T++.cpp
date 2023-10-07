@@ -132,8 +132,8 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	std::cout << "the program is" << std:: endl;
-	printProgram(prog.value());
+	//std::cout << "the program is" << std:: endl;
+	//printProgram(prog.value());
 
 	// Generate C code
 	Generator gen(prog.value());

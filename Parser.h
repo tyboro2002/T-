@@ -6,17 +6,17 @@
 #include "arena.h"
 
 #define standAloneNode std::variant<NodeExit, NodeSay, NodeShout, NodeReturn, NodeIdentifier, NodeScope, NodeIf, NodeInput, NodeVarDump>
-/**
+
 struct NodeTppInp {
 	int number;
 };
-*/
+
 struct NodeVarDump {
 	Token str_lit;
 };
 
 struct NodeExpr {
-	std::variant<Token/*, NodeTppInp*/> exprPart;
+	std::variant<Token, NodeTppInp> exprPart;
 };
 
 struct NodeTest {
@@ -98,7 +98,7 @@ private:
 	NodeExit parseExit();
 	NodeInput parseInput();
 	Token parseStringLit();
-	//NodeTppInp parseTppInp();
+	NodeTppInp parseTppInp();
 	std::optional<NodeTest> parseTest(NodeExpr exprNodeLeft);
 	std::optional<NodeElse> parseOptionalElse();
 	std::vector<NodeElif> parseElifs();
