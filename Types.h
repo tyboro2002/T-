@@ -7,9 +7,38 @@
 
 //administrative define's
 #define NewLine "\n"
+#define SEMI ';'
+#define OPEN_PAREN '('
+#define CLOSED_PAREN ')'
+#define OPEN_CURLY '{'
+#define CLOSED_CURLY '}'
+#define EQUAL '='
+#define NOT '!'
+#define SMALLER '<'
+#define LARGER '>'
+#define COMMA ','
+#define QUOTE '"'
+#define ESCAPE_CHAR '\\'
+
+
+#define COMMENT_CHAR '#'
+#define MULTILINE_COMMENT_FIRST_CHAR '/'
+#define MULTILINE_COMMENT_SECOND_CHAR '*'
 
 //define's defining the keywords
 #define EXIT "exit"
+#define SAY "say"
+#define RETURN "return"
+#define REQUEST "request"
+#define SHOUT "shout"
+#define IF "if"
+#define ELIF "elif"
+#define ELSE "else"
+#define DUMPVAR "dumpVar"
+#define TPPINP "tppInp"
+#define TPPCOUNT "tppCount"
+
+#define IMPORT "import"
 
 
 enum class TokenType {

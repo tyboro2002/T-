@@ -7,6 +7,15 @@ std::optional<Token> Parser::peak(int ahead) const {
 
 Token Parser::consume() { return m_tokens.at(m_index++);}
 
+void Parser::sayError(char ch) {
+	if (peak().has_value()) {
+		std::cerr << "expected " << ch << " and found " << peak().value() << " after " << peak(0).value() << " at index " << m_index << std::endl;
+	}
+	else {
+		std::cerr << "expected " << ch << " and found nothing" << std::endl;
+	}
+}
+
 std::optional<NodeExpr> Parser::parse_expr() {
 	std::optional<NodeExpr> expr_node;
 	//std::cout << "token is: " << peak().value() << std::endl;
@@ -31,12 +40,7 @@ std::optional<NodeExpr> Parser::parse_expr() {
 
 void Parser::parseOpenParen() {
 	if (!peak().has_value() || peak().value().type != TokenType::open_Paren) {
-		if (peak().has_value()) {
-			std::cerr << "expected ( and found " << peak().value() << std::endl;
-		}
-		else {
-			std::cerr << "expected ( and found nothing" << std::endl;
-		}
+		sayError(OPEN_PAREN);
 		exit(EXIT_FAILURE);
 	}
 	consume();
@@ -44,12 +48,7 @@ void Parser::parseOpenParen() {
 
 void Parser::parseCloseParen() {
 	if (!peak().has_value() || peak().value().type != TokenType::closed_Paren) {
-		if (peak().has_value()) {
-			std::cerr << "expected ) and found " << peak().value() << " after " << peak(0).value()  << " at index " << m_index << std::endl;
-		}
-		else {
-			std::cerr << "expected ) and found nothing" << std::endl;
-		}
+		sayError(CLOSED_PAREN);
 		exit(EXIT_FAILURE);
 	}
 	consume();
@@ -57,6 +56,7 @@ void Parser::parseCloseParen() {
 
 void Parser::parseOpenQuote() {
 	if (!peak().has_value() || peak().value().type != TokenType::open_Quote) {
+		sayError(QUOTE);
 		std::cerr << "please open your string quotes." << NewLine << peak().value() << std::endl;
 		exit(EXIT_FAILURE);
 	}
@@ -65,6 +65,7 @@ void Parser::parseOpenQuote() {
 
 void Parser::parseCloseQuote() {
 	if (!peak().has_value() || peak().value().type != TokenType::closed_Quote) {
+		sayError(QUOTE);
 		std::cerr << "please close your string quote" << std::endl;
 		exit(EXIT_FAILURE);
 	}
@@ -73,12 +74,7 @@ void Parser::parseCloseQuote() {
 
 void Parser::parseOpenCurly() {
 	if (!peak().has_value() || peak().value().type != TokenType::open_curly) {
-		if (peak().has_value()) {
-			std::cerr << "expected { and found " << peak().value() << std::endl;
-		}
-		else {
-			std::cerr << "expected { and found nothing" << std::endl;
-		}
+		sayError(OPEN_CURLY);
 		exit(EXIT_FAILURE);
 	}
 	consume();
@@ -86,7 +82,7 @@ void Parser::parseOpenCurly() {
 
 void Parser::parseCloseCurly() {
 	if (!peak().has_value() || peak().value().type != TokenType::closed_curly) {
-		std::cerr << "expected }" << std::endl;
+		sayError(CLOSED_CURLY);
 		exit(EXIT_FAILURE);
 	}
 	consume();
@@ -94,7 +90,7 @@ void Parser::parseCloseCurly() {
 
 void Parser::parseEquals() {
 	if (!peak().has_value() || peak().value().type != TokenType::equals) {
-		std::cerr << "expecting =" << std::endl;
+		sayError(EQUAL);
 		exit(EXIT_FAILURE);
 	}
 	consume(); //consume the equals
@@ -102,7 +98,7 @@ void Parser::parseEquals() {
 
 void Parser::parseSemi() {
 	if (!peak().has_value() || peak().value().type != TokenType::semi) {
-		std::cerr << "expecting ;" << std::endl;
+		sayError(SEMI);
 		exit(EXIT_FAILURE);
 	}
 	consume(); //consume the semicoln

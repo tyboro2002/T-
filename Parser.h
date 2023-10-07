@@ -89,6 +89,7 @@ private:
 	[[nodiscard]] std::optional<Token> peak(int ahead = 1) const;
 	Token consume();
 	Token tryConsume(TokenType tokenType, std::string errorMessage);
+	void sayError(char ch);
 
 	NodeVarDump parseVarDump();
 	NodeReturn parseReturn();
