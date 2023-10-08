@@ -45,11 +45,11 @@ std::string convertTest(Token test) {
 }
 
 // Function to convert a NodeExpr to a string suitable for the << operator
-std::string Generator::convertNodeExprOrNodeTest(std::variant<NodeExpr, NodeTest> node) {
+std::string Generator::convertNodeExprOrNodeTest(std::variant<NodeExpr*, NodeTest> node) {
 	std::stringstream ss;
-	if (std::holds_alternative<NodeExpr>(node)) {
-		const NodeExpr& expr_node = std::get<NodeExpr>(node);
-		ss << convertNodeExpr(expr_node);
+	if (std::holds_alternative<NodeExpr*>(node)) {
+		const NodeExpr* expr_node = std::get<NodeExpr*>(node);
+		ss << convertNodeExpr(*expr_node);
 	}
 	else if (std::holds_alternative<NodeTest>(node)) {
 		const NodeTest& test_node = std::get<NodeTest>(node);
@@ -142,22 +142,8 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 			out << "}" << NewLine;
 		}else if (std::holds_alternative<NodeIf>(variantNode)) {
 			const NodeIf& ifNode = std::get<NodeIf>(variantNode);
-			
-			// Convert the variant to a variant of pointers
-			// Convert the variant to a variant of the target type
-			std::variant<NodeExpr, NodeTest> convertedVariant = std::visit([](auto&& arg) -> std::variant<NodeExpr, NodeTest> {
-				if constexpr (std::is_same_v<decltype(arg), NodeExpr*>) {
-					return convertToVariant(arg); // Use your conversion function here
-				}
-				else if constexpr (std::is_same_v<decltype(arg), NodeTest*>) {
-					return convertToVariant(arg); // Use your conversion function here
-				}
-				else {
-					throw std::runtime_error("Invalid type in variant");
-				}
-				}, ifNode.expr);
 			out << "if (";
-			out << convertNodeExprOrNodeTest(convertedVariant);
+			out << convertNodeExprOrNodeTest(ifNode.expr);
 			out << "){" << NewLine;
 			if (ifNode.scope.codeLines.size() > 0) {
 				out << generateCodeLines(ifNode.scope.codeLines);
@@ -166,19 +152,8 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 			if (ifNode.elifs.size() != 0) {
 				// Iterate over all elif's
 				for (const NodeElif& nodeElif : ifNode.elifs) {
-					std::variant<NodeExpr, NodeTest> convertedVariant = std::visit([](auto&& arg) -> std::variant<NodeExpr, NodeTest> {
-						if constexpr (std::is_same_v<decltype(arg), NodeExpr*>) {
-							return convertToVariant(arg); // Use your conversion function here
-						}
-						else if constexpr (std::is_same_v<decltype(arg), NodeTest*>) {
-							return convertToVariant(arg); // Use your conversion function here
-						}
-						else {
-							throw std::runtime_error("Invalid type in variant");
-						}
-						}, nodeElif.expr);
 					out << "else if (";
-					out << convertNodeExprOrNodeTest(convertedVariant);
+					out << convertNodeExprOrNodeTest(nodeElif.expr);
 					out << "){" << NewLine;
 					out << generateCodeLines(nodeElif.scope.codeLines);
 					out << "}" << NewLine;
