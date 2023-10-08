@@ -2,7 +2,10 @@
 [] read as list
 ?? read as optional
 
-Expr -> (int_lit / identifier)
+Expr -> (int_lit / identifier / binExpr)
+binExpr:
+	Expr * Expr (prec = 1)
+	Expr + Expr (prec = 0)
 Return -> (Expr / string_lit)
 say -> string_lit
 shout -> string_lit

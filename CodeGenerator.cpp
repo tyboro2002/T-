@@ -53,22 +53,22 @@ std::string Generator::convertNodeExprOrNodeTest(std::variant<NodeExpr, NodeTest
 	}
 	else if (std::holds_alternative<NodeTest>(node)) {
 		const NodeTest& test_node = std::get<NodeTest>(node);
-		if (std::holds_alternative<Token>(test_node.right_expr.exprPart)) {
-			const Token& token = std::get<Token>(test_node.right_expr.exprPart);
+		if (std::holds_alternative<Token>(test_node.right_expr->exprPart)) {
+			const Token& token = std::get<Token>(test_node.right_expr->exprPart);
 			if (token.type == TokenType::string_lit) {
 				ss << "strcmp(";
-				ss << convertNodeExpr(test_node.left_expr);
+				ss << convertNodeExpr(*test_node.left_expr);
 				ss << ",";
-				ss << convertNodeExpr(test_node.right_expr);
+				ss << convertNodeExpr(*test_node.right_expr);
 				ss << ")";
 				ss << convertTest(test_node.test_expr);
 				ss << "0";
 				return ss.str();
 			}
 		}
-		ss << convertNodeExpr(test_node.left_expr);
+		ss << convertNodeExpr(*test_node.left_expr);
 		ss << convertTest(test_node.test_expr);
-		ss << convertNodeExpr(test_node.right_expr);
+		ss << convertNodeExpr(*test_node.right_expr);
 	}
 	else {
 		std::cerr << "invalid type in expr or test!" << std::endl;
@@ -83,12 +83,12 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 		const standAloneNode& variantNode = inputCodeLines.at(i);
 		if (std::holds_alternative<NodeExit>(variantNode)) {
 			const NodeExit& exitNode = std::get<NodeExit>(variantNode);
-			out << "	exit(" << convertNodeExpr(exitNode.expr) << ");" << NewLine;
+			out << "	exit(" << convertNodeExpr(*exitNode.expr) << ");" << NewLine;
 		}else if (std::holds_alternative<NodeReturn>(variantNode)) {
 			const NodeReturn& returnNode = std::get<NodeReturn>(variantNode);
-			if (std::holds_alternative<NodeExpr>(returnNode.retVal)) {
-				const NodeExpr& returnExprNode = std::get<NodeExpr>(returnNode.retVal);
-				out << "	return(" << convertNodeExpr(returnExprNode) << ");" << NewLine;
+			if (std::holds_alternative<NodeExpr*>(returnNode.retVal)) {
+				const NodeExpr* returnExprNode = std::get<NodeExpr*>(returnNode.retVal);
+				out << "	return(" << convertNodeExpr(*returnExprNode) << ");" << NewLine;
 			}
 			else if (std::holds_alternative<Token>(returnNode.retVal)) {
 				const Token& returnTokenNode = std::get<Token>(returnNode.retVal);
@@ -127,10 +127,10 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 			}
 			if (!isAlreadyDefined) {
 				m_defined_variabels.push_back(identifierNode.name);
-				out << "	int " << identifierNode.name << " = " << convertNodeExpr(identifierNode.expr) << ";" << NewLine;
+				out << "	int " << identifierNode.name << " = " << convertNodeExpr(*identifierNode.expr) << ";" << NewLine;
 			}
 			else {
-				out << "	" << identifierNode.name << " = " << convertNodeExpr(identifierNode.expr) << ";" << NewLine;
+				out << "	" << identifierNode.name << " = " << convertNodeExpr(*identifierNode.expr) << ";" << NewLine;
 			}
 		}
 		else if (std::holds_alternative<NodeScope>(variantNode)) {
@@ -142,8 +142,22 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 			out << "}" << NewLine;
 		}else if (std::holds_alternative<NodeIf>(variantNode)) {
 			const NodeIf& ifNode = std::get<NodeIf>(variantNode);
+			
+			// Convert the variant to a variant of pointers
+			// Convert the variant to a variant of the target type
+			std::variant<NodeExpr, NodeTest> convertedVariant = std::visit([](auto&& arg) -> std::variant<NodeExpr, NodeTest> {
+				if constexpr (std::is_same_v<decltype(arg), NodeExpr*>) {
+					return convertToVariant(arg); // Use your conversion function here
+				}
+				else if constexpr (std::is_same_v<decltype(arg), NodeTest*>) {
+					return convertToVariant(arg); // Use your conversion function here
+				}
+				else {
+					throw std::runtime_error("Invalid type in variant");
+				}
+				}, ifNode.expr);
 			out << "if (";
-			out << convertNodeExprOrNodeTest(ifNode.expr);
+			out << convertNodeExprOrNodeTest(convertedVariant);
 			out << "){" << NewLine;
 			if (ifNode.scope.codeLines.size() > 0) {
 				out << generateCodeLines(ifNode.scope.codeLines);
@@ -152,8 +166,19 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 			if (ifNode.elifs.size() != 0) {
 				// Iterate over all elif's
 				for (const NodeElif& nodeElif : ifNode.elifs) {
+					std::variant<NodeExpr, NodeTest> convertedVariant = std::visit([](auto&& arg) -> std::variant<NodeExpr, NodeTest> {
+						if constexpr (std::is_same_v<decltype(arg), NodeExpr*>) {
+							return convertToVariant(arg); // Use your conversion function here
+						}
+						else if constexpr (std::is_same_v<decltype(arg), NodeTest*>) {
+							return convertToVariant(arg); // Use your conversion function here
+						}
+						else {
+							throw std::runtime_error("Invalid type in variant");
+						}
+						}, nodeElif.expr);
 					out << "else if (";
-					out << convertNodeExprOrNodeTest(nodeElif.expr);
+					out << convertNodeExprOrNodeTest(convertedVariant);
 					out << "){" << NewLine;
 					out << generateCodeLines(nodeElif.scope.codeLines);
 					out << "}" << NewLine;

@@ -16,26 +16,25 @@ void Parser::sayError(char ch) {
 	}
 }
 
-std::optional<NodeExpr> Parser::parse_expr() {
-	std::optional<NodeExpr> expr_node;
+std::optional<NodeExpr*> Parser::parse_expr() {
+	NodeExpr* nodeExpr = m_allocator.alloc<NodeExpr>();
 	//std::cout << "token is: " << peak().value() << std::endl;
 	if (peak().has_value() && peak().value().type == TokenType::tppcount) {
-		return NodeExpr{ .exprPart = tryConsume(TokenType::tppcount, "this tppCount disapeared") };
+		nodeExpr->exprPart = tryConsume(TokenType::tppcount, "this tppCount disapeared");
 	}else if (peak().has_value() && peak().value().type == TokenType::int_lit) {
-		return NodeExpr{ .exprPart = tryConsume(TokenType::int_lit, "this int_lit disapeared")};
+		nodeExpr->exprPart = tryConsume(TokenType::int_lit, "this int_lit disapeared");
 	}else if (peak().has_value() && peak().value().type == TokenType::open_Quote) {
 		tryConsume(TokenType::open_Quote, "expected open quote");
-		expr_node = NodeExpr{ .exprPart = tryConsume(TokenType::string_lit, "this string_lit disapeared") };
+		nodeExpr->exprPart = tryConsume(TokenType::string_lit, "this string_lit disapeared");
 		tryConsume(TokenType::closed_Quote, "expected closing quote");
-		return expr_node;
 	}else if (peak().has_value() && peak().value().type == TokenType::identifier) {
-		return NodeExpr{ .exprPart = tryConsume(TokenType::identifier, "this identifier disapeared")};
+		nodeExpr->exprPart = tryConsume(TokenType::identifier, "this identifier disapeared");
 	}else if (peak().has_value() && peak().value().type == TokenType::tppinp) {
-		return NodeExpr{ .exprPart = parseTppInp()};
+		nodeExpr->exprPart = parseTppInp();
 	}else {
 		return {};
 	}
-	return expr_node;
+	return nodeExpr;
 }
 
 void Parser::parseOpenParen() {
@@ -213,12 +212,12 @@ std::optional<NodeElse> Parser::parseOptionalElse() {
 
 std::vector<NodeElif> Parser::parseElifs() {
 	std::vector<NodeElif> elifs;
-	NodeElif elifNode;
+	NodeElif elifNode;// = m_allocator.alloc<NodeElif>();
 	while (peak().has_value() && peak().value().type == TokenType::_elif) {
 		tryConsume(TokenType::_elif, "expected elif"); // consume the elif
 		parseOpenParen();
 		if (auto node_expr = parse_expr()) {
-			NodeExpr exprNodeLeft = node_expr.value();
+			NodeExpr* exprNodeLeft =node_expr.value();
 			if (auto node_test = parseTest(exprNodeLeft)) {
 				elifNode.expr = node_test.value();
 			}
@@ -244,7 +243,7 @@ NodeIf Parser::parseIf() {
 	tryConsume(TokenType::_if, "expected if"); //consume the if token
 	parseOpenParen();
 	if (auto node_expr = parse_expr()) {
-		NodeExpr exprNodeLeft = node_expr.value();
+		NodeExpr* exprNodeLeft = node_expr.value();
 		if (auto node_test = parseTest(exprNodeLeft)) {
 			parseCloseParen();
 			parseOpenCurly();
@@ -352,8 +351,8 @@ Token Parser::parseStringLit() {
 	return str;
 }
 
-std::optional<NodeTest> Parser::parseTest(NodeExpr exprNodeLeft) {
-	NodeTest nodeTest;
+std::optional<NodeTest> Parser::parseTest(NodeExpr* exprNodeLeft) {
+	NodeTest nodeTest;//NodeTest* nodeTest = m_allocator.alloc<NodeTest>();
 	nodeTest.left_expr = exprNodeLeft;
 	if (peak().has_value() && peak().value().type == TokenType::test_equal) {
 		consume();

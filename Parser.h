@@ -15,14 +15,30 @@ struct NodeVarDump {
 	Token str_lit;
 };
 
+struct NodeExpr;
+
+struct NodeBinExprAdd {
+	NodeExpr* left;
+	NodeExpr* right;
+};
+
+struct NodeBinExprMult {
+	NodeExpr* left;
+	NodeExpr* right;
+};
+
+struct NodeBinExpr {
+	std::variant<NodeBinExprAdd*, NodeBinExprMult*> expr;
+};
+
 struct NodeExpr {
-	std::variant<Token, NodeTppInp> exprPart;
+	std::variant<Token, NodeTppInp, NodeBinExpr*> exprPart;
 };
 
 struct NodeTest {
-	NodeExpr left_expr;
+	NodeExpr* left_expr;
 	Token test_expr;
-	NodeExpr right_expr;
+	NodeExpr* right_expr;
 };
 
 struct NodeInput {
@@ -30,7 +46,7 @@ struct NodeInput {
 };
 
 struct NodeReturn {
-	std::variant<NodeExpr, Token> retVal;
+	std::variant<NodeExpr*, Token> retVal;
 };
 
 struct NodeSay {
@@ -42,12 +58,12 @@ struct NodeShout {
 };
 
 struct NodeExit {
-	NodeExpr expr;
+	NodeExpr* expr;
 };
 
 struct NodeIdentifier {
 	std::string name;
-	NodeExpr expr;
+	NodeExpr* expr;
 };
 
 struct NodeIf;
@@ -57,7 +73,7 @@ struct NodeScope {
 };
 
 struct NodeElif {
-	std::variant<NodeExpr, NodeTest> expr;
+	std::variant<NodeExpr*, NodeTest> expr;
 	NodeScope scope;
 };
 
@@ -66,7 +82,7 @@ struct NodeElse {
 };
 
 struct NodeIf {
-	std::variant<NodeExpr, NodeTest> expr;
+	std::variant<NodeExpr*, NodeTest> expr;
 	NodeScope scope;
 	std::vector<NodeElif> elifs = {};
 	std::optional<NodeElse> elsePart;
@@ -82,8 +98,7 @@ class Parser {
 	int m_index;
 	ArenaAllocator m_allocator;
 public:
-	Parser(std::vector<Token> tokens) : m_tokens(std::move(tokens)), m_index(0), m_allocator(1024*1024*4) {}
-	std::optional<NodeExpr> parse_expr();
+	Parser(std::vector<Token> tokens) : m_tokens(std::move(tokens)), m_index(0), m_allocator(1024*1024*4) /* 4mb allocator*/ {}
 	std::optional<program> parse();
 private:
 	[[nodiscard]] std::optional<Token> peak(int ahead = 1) const;
@@ -100,9 +115,10 @@ private:
 	NodeInput parseInput();
 	Token parseStringLit();
 	NodeTppInp parseTppInp();
-	std::optional<NodeTest> parseTest(NodeExpr exprNodeLeft);
+	std::optional<NodeTest> parseTest(NodeExpr* exprNodeLeft);
 	std::optional<NodeElse> parseOptionalElse();
 	std::vector<NodeElif> parseElifs();
+	std::optional<NodeExpr*> parse_expr();
 	NodeIf parseIf();
 	std::vector<standAloneNode> parseProgram();
 	void parseOpenParen();

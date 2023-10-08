@@ -20,15 +20,15 @@ std::string convertNodeExpr(const NodeExpr node) {
 }
 
 // Function to convert a NodeExpr to a string suitable for the << operator
-std::string convertNodeExprOrNodeTest(std::variant<NodeExpr, NodeTest> node) {
+std::string convertNodeExprOrNodeTest(std::variant<NodeExpr*, NodeTest> node) {
 	std::stringstream ss;
 	if (std::holds_alternative<NodeExpr>(node)) {
-		const NodeExpr& expr_node = std::get<NodeExpr>(node);
-		ss << convertNodeExpr(expr_node);
+		const NodeExpr* expr_node = std::get<NodeExpr*>(node);
+		ss << convertNodeExpr(*expr_node);
 	}
 	else if (std::holds_alternative<NodeTest>(node)) {
 		const NodeTest& test_node = std::get<NodeTest>(node);
-		ss << convertNodeExpr(test_node.left_expr);
+		ss << convertNodeExpr(*test_node.left_expr);
 
 		if (test_node.test_expr.type == TokenType::test_equal) {
 			ss << "==";
@@ -48,7 +48,7 @@ std::string convertNodeExprOrNodeTest(std::variant<NodeExpr, NodeTest> node) {
 		else if (test_node.test_expr.type == TokenType::test_smaller) {
 			ss << "<";
 		}
-		ss << convertNodeExpr(test_node.right_expr);
+		ss << convertNodeExpr(*test_node.right_expr);
 	}
 	else {
 		std::cerr << "invalid type in expr or test!" << std::endl;
@@ -62,7 +62,7 @@ void printProgram(const program& prog) {
 	for (const auto& codeLine : prog.codeLines) {
 		if (std::holds_alternative<NodeExit>(codeLine)) {
 			const NodeExit& exitNode = std::get<NodeExit>(codeLine);
-			std::cout << "NodeExit: expr = " << convertNodeExpr(exitNode.expr) << std::endl;
+			std::cout << "NodeExit: expr = " << convertNodeExpr(*exitNode.expr) << std::endl;
 		}else if (std::holds_alternative<NodeSay>(codeLine)) {
 			const NodeSay& printNode = std::get<NodeSay>(codeLine);
 			std::cout << "NodeSay: string_lit_identifier = " << printNode.string_lit_identifier << std::endl;
@@ -72,8 +72,8 @@ void printProgram(const program& prog) {
 		}else if (std::holds_alternative<NodeReturn>(codeLine)) {
 			const NodeReturn& returnNode = std::get<NodeReturn>(codeLine);
 			if (std::holds_alternative<NodeExpr>(returnNode.retVal)) {
-				const NodeExpr& returnExprNode = std::get<NodeExpr>(returnNode.retVal);
-				std::cout << "NodeReturn: expr = " << convertNodeExpr(returnExprNode) << std::endl;
+				const NodeExpr* returnExprNode = std::get<NodeExpr*>(returnNode.retVal);
+				std::cout << "NodeReturn: expr = " << convertNodeExpr(*returnExprNode) << std::endl;
 			}
 			else if (std::holds_alternative<Token>(returnNode.retVal)) {
 				const Token& returnToken = std::get<Token>(returnNode.retVal);
@@ -83,7 +83,7 @@ void printProgram(const program& prog) {
 			}
 		}else if (std::holds_alternative<NodeIdentifier>(codeLine)) {
 			const NodeIdentifier& identifierNode = std::get<NodeIdentifier>(codeLine);
-			std::cout << "NodeIdentifier: name = " << identifierNode.name << ", value = " << convertNodeExpr(identifierNode.expr) << std::endl;
+			std::cout << "NodeIdentifier: name = " << identifierNode.name << ", value = " << convertNodeExpr(*identifierNode.expr) << std::endl;
 		}else if (std::holds_alternative<NodeIf>(codeLine)) {
 			const NodeIf& ifNode = std::get<NodeIf>(codeLine);
 			std::cout << "ifNode: expr: " << convertNodeExprOrNodeTest(ifNode.expr) << std::endl;

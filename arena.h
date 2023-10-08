@@ -12,7 +12,7 @@ public:
 	template <typename T>
 	inline T* alloc() {
 		void* offset = m_offset;
-		m_offset += sizeOf(T);
+		m_offset += sizeof(T);
 		return static_cast<T*>(offset);
 	}
 	inline ArenaAllocator(const ArenaAllocator& other) = delete;
