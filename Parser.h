@@ -122,7 +122,7 @@ private:
 	std::optional<NodeElse> parseOptionalElse();
 	std::vector<NodeElif> parseElifs();
 	std::optional<NodeExpr*> parse_expr();
-	std::optional<NodeBinExpr*> parse_bin_expr();
+	//std::optional<NodeBinExpr*> parse_bin_expr();
 	std::optional<NodeTerm> parse_term();
 	NodeIf parseIf();
 	std::vector<standAloneNode> parseProgram();

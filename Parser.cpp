@@ -16,7 +16,7 @@ void Parser::sayError(char ch) {
 	}
 }
 
-std::optional<NodeBinExpr*> Parser::parse_bin_expr() {
+/*std::optional<NodeBinExpr*> Parser::parse_bin_expr() {
 	if (auto left = parse_expr()) {
 		auto binExpr = m_allocator.alloc<NodeBinExpr>();
 		if (peak().has_value() && peak().value().type == TokenType::addition) {
@@ -33,18 +33,28 @@ std::optional<NodeBinExpr*> Parser::parse_bin_expr() {
 				exit(EXIT_FAILURE);
 			}
 		}else if (peak().has_value() && peak().value().type == TokenType::multiplication) {
-			std::cerr << "unimplemented binary operator" << std::endl;
-			exit(EXIT_FAILURE);
-		}
-		else {
-			std::cerr << "unsoported binary operator" << std::endl;
+			auto binExprMult = m_allocator.alloc<NodeBinExprMult>();
+			binExprMult->left = left.value();
+			tryConsume(TokenType::multiplication, "expected +");
+			if (auto right = parse_expr()) {
+				binExprMult->right = right.value();
+				binExpr->expr = binExprMult;
+				return binExpr;
+			}
+			else {
+				std::cerr << "no right expresion in binary expresion" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+		}else {
+			std::cerr << "unsuported binary operator" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 	}
 	else {
 		return {};
 	}
-}
+}*/
+
 std::optional<NodeTerm> Parser::parse_term() {
 	NodeTerm nodeTerm;
 	if (peak().has_value() && peak().value().type == TokenType::tppcount) {
@@ -92,12 +102,25 @@ std::optional<NodeExpr*> Parser::parse_expr() {
 					std::cerr << "no right expresion in binary expresion" << std::endl;
 					exit(EXIT_FAILURE);
 				}
-			}/*else if (peak().has_value() && peak().value().type == TokenType::multiplication) {
-				std::cerr << "unimplemented binary operator" << std::endl;
-				exit(EXIT_FAILURE);
-			}*/
-			else {
-				std::cerr << "unsoported binary operator" << std::endl;
+			}
+			else if (peak().has_value() && peak().value().type == TokenType::multiplication) {
+				NodeBinExprMult* binExprMultiplication = m_allocator.alloc<NodeBinExprMult>();
+				NodeExpr* left = m_allocator.alloc<NodeExpr>();
+				left->exprPart = term.value();
+				binExprMultiplication->left = left;
+				tryConsume(TokenType::multiplication, "expected *");
+				if (auto right = parse_expr()) {
+					binExprMultiplication->right = right.value();
+					binExpr->expr = binExprMultiplication;
+					nodeExpr->exprPart = binExpr;
+					return nodeExpr;
+				}
+				else {
+					std::cerr << "no right expresion in binary expresion" << std::endl;
+					exit(EXIT_FAILURE);
+				}
+			}else {
+				std::cerr << "unsuported binary operator" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 		}else {

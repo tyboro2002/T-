@@ -26,7 +26,7 @@ if (inputVariable>=100) {
 }
 
 /* some testing for variables */
-x = 8 + 5;
+x = 8 + 5 * 10;
 b = x;
 x = 5;
 y = 9;
