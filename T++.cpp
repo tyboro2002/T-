@@ -22,7 +22,7 @@ std::string convertNodeExpr(const NodeExpr node) {
 // Function to convert a NodeExpr to a string suitable for the << operator
 std::string convertNodeExprOrNodeTest(std::variant<NodeExpr*, NodeTest> node) {
 	std::stringstream ss;
-	if (std::holds_alternative<NodeExpr>(node)) {
+	if (std::holds_alternative<NodeExpr*>(node)) {
 		const NodeExpr* expr_node = std::get<NodeExpr*>(node);
 		ss << convertNodeExpr(*expr_node);
 	}
@@ -71,7 +71,7 @@ void printProgram(const program& prog) {
 			std::cout << "NodeSchout: string_lit_identifier = " << printNode.string_lit_identifier << std::endl;
 		}else if (std::holds_alternative<NodeReturn>(codeLine)) {
 			const NodeReturn& returnNode = std::get<NodeReturn>(codeLine);
-			if (std::holds_alternative<NodeExpr>(returnNode.retVal)) {
+			if (std::holds_alternative<NodeExpr*>(returnNode.retVal)) {
 				const NodeExpr* returnExprNode = std::get<NodeExpr*>(returnNode.retVal);
 				std::cout << "NodeReturn: expr = " << convertNodeExpr(*returnExprNode) << std::endl;
 			}
