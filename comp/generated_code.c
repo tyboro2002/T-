@@ -21,7 +21,7 @@ else if (inputVariable > 3){
 else{
 	printf("oof so young\n");
 }
-	int x = 8;
+	int x = 8 + 5;
 	int b = x;
 	x = 5;
 	int y = 9;

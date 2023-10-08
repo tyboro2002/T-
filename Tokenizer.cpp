@@ -161,6 +161,12 @@ std::vector<Token> Tokenizer::tokenize() {
 		}else if (peak().value() == COMMA) {
 				tokens.push_back({ .type = TokenType::comma });
 				consume();
+		}else if (peak().value() == '+') { //TODO pull to types.h
+			tokens.push_back({ .type = TokenType::addition });
+			consume();
+		}else if (peak().value() == '*') { //TODO pull to types.h
+				tokens.push_back({ .type = TokenType::multiplication });
+				consume();
 		}else if (isspace(peak().value())) {
 			consume();
 			continue;

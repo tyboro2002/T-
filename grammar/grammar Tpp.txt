@@ -2,7 +2,8 @@
 [] read as list
 ?? read as optional
 
-Expr -> (int_lit / identifier / binExpr)
+term -> (int_lit/identifier)
+Expr -> (term / binExpr)
 binExpr:
 	Expr * Expr (prec = 1)
 	Expr + Expr (prec = 0)

@@ -63,6 +63,10 @@ std::string TokenTypeToString(TokenType type) {
         return "tppInp";
     case TokenType::tppcount:
         return "tppCount";
+    case TokenType::addition:
+        return "addition";
+    case TokenType::multiplication:
+        return "multiplication";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

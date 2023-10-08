@@ -16,23 +16,98 @@ void Parser::sayError(char ch) {
 	}
 }
 
+std::optional<NodeBinExpr*> Parser::parse_bin_expr() {
+	if (auto left = parse_expr()) {
+		auto binExpr = m_allocator.alloc<NodeBinExpr>();
+		if (peak().has_value() && peak().value().type == TokenType::addition) {
+			auto binExprAddition = m_allocator.alloc<NodeBinExprAdd>();
+			binExprAddition->left = left.value();
+			tryConsume(TokenType::addition, "expected +");
+			if (auto right = parse_expr()) {
+				binExprAddition->right = right.value();
+				binExpr->expr = binExprAddition;
+				return binExpr;
+			}
+			else {
+				std::cerr << "no right expresion in binary expresion" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+		}else if (peak().has_value() && peak().value().type == TokenType::multiplication) {
+			std::cerr << "unimplemented binary operator" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		else {
+			std::cerr << "unsoported binary operator" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+	else {
+		return {};
+	}
+}
+std::optional<NodeTerm> Parser::parse_term() {
+	NodeTerm nodeTerm;
+	if (peak().has_value() && peak().value().type == TokenType::tppcount) {
+		nodeTerm.term_part = tryConsume(TokenType::tppcount, "this tppCount disapeared");
+	}
+	else if (peak().has_value() && peak().value().type == TokenType::int_lit) {
+		nodeTerm.term_part = tryConsume(TokenType::int_lit, "this int_lit disapeared");
+	}
+	else if (peak().has_value() && peak().value().type == TokenType::open_Quote) {
+		tryConsume(TokenType::open_Quote, "expected open quote");
+		nodeTerm.term_part = tryConsume(TokenType::string_lit, "this string_lit disapeared");
+		tryConsume(TokenType::closed_Quote, "expected closing quote");
+	}
+	else if (peak().has_value() && peak().value().type == TokenType::identifier) {
+		nodeTerm.term_part = tryConsume(TokenType::identifier, "this identifier disapeared");
+	}
+	else if (peak().has_value() && peak().value().type == TokenType::tppinp) {
+		nodeTerm.term_part = parseTppInp();
+	}
+	else {
+		return {};
+	}
+	return nodeTerm;
+}
+
 std::optional<NodeExpr*> Parser::parse_expr() {
 	NodeExpr* nodeExpr = m_allocator.alloc<NodeExpr>();
 	//std::cout << "token is: " << peak().value() << std::endl;
-	if (peak().has_value() && peak().value().type == TokenType::tppcount) {
-		nodeExpr->exprPart = tryConsume(TokenType::tppcount, "this tppCount disapeared");
-	}else if (peak().has_value() && peak().value().type == TokenType::int_lit) {
-		nodeExpr->exprPart = tryConsume(TokenType::int_lit, "this int_lit disapeared");
-	}else if (peak().has_value() && peak().value().type == TokenType::open_Quote) {
-		tryConsume(TokenType::open_Quote, "expected open quote");
-		nodeExpr->exprPart = tryConsume(TokenType::string_lit, "this string_lit disapeared");
-		tryConsume(TokenType::closed_Quote, "expected closing quote");
-	}else if (peak().has_value() && peak().value().type == TokenType::identifier) {
-		nodeExpr->exprPart = tryConsume(TokenType::identifier, "this identifier disapeared");
-	}else if (peak().has_value() && peak().value().type == TokenType::tppinp) {
-		nodeExpr->exprPart = parseTppInp();
-	}else {
-		return {};
+	if (auto term = parse_term()) {
+		if (peak().has_value() && (peak().value().type == TokenType::addition || peak().value().type == TokenType::multiplication)) {
+			auto binExpr = m_allocator.alloc<NodeBinExpr>();
+			if (peak().has_value() && peak().value().type == TokenType::addition) {
+				NodeBinExprAdd* binExprAddition = m_allocator.alloc<NodeBinExprAdd>();
+				NodeExpr* left = m_allocator.alloc<NodeExpr>();
+				left->exprPart = term.value();
+				binExprAddition->left = left;
+				tryConsume(TokenType::addition, "expected +");
+				if (auto right = parse_expr()) {
+					binExprAddition->right = right.value();
+					binExpr->expr = binExprAddition;
+					nodeExpr->exprPart = binExpr;
+					return nodeExpr;
+				}
+				else {
+					std::cerr << "no right expresion in binary expresion" << std::endl;
+					exit(EXIT_FAILURE);
+				}
+			}/*else if (peak().has_value() && peak().value().type == TokenType::multiplication) {
+				std::cerr << "unimplemented binary operator" << std::endl;
+				exit(EXIT_FAILURE);
+			}*/
+			else {
+				std::cerr << "unsoported binary operator" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+		}else {
+			nodeExpr->exprPart = term.value();
+			return nodeExpr;
+		}
+	}
+	else {
+		std::cerr << "unable to parse term" << std::endl;
+		exit(EXIT_FAILURE);
 	}
 	return nodeExpr;
 }
@@ -138,6 +213,7 @@ NodeIdentifier Parser::parseIdentifier() {
 		std::cerr << "invalid expresion encounterd in identifier!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	
 	parseSemi();
 	return identifier_node;
 }

@@ -71,7 +71,9 @@ enum class TokenType {
     comma,
     var_dump,
     tppinp,
-    tppcount
+    tppcount,
+    addition,
+    multiplication
 };
 
 struct Token {

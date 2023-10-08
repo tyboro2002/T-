@@ -12,9 +12,12 @@ using namespace std;
 // Function to convert a NodeExpr to a string suitable for the << operator
 std::string convertNodeExpr(const NodeExpr node) {
 	std::stringstream ss;
-	if (std::holds_alternative<Token>(node.exprPart)) {
-		const Token& token = std::get<Token>(node.exprPart);
-		ss << token.value.value();
+	if (std::holds_alternative<NodeTerm>(node.exprPart)) {
+		const NodeTerm& term = std::get<NodeTerm>(node.exprPart);
+		if (std::holds_alternative<Token>(term.term_part)) {
+			const Token& token = std::get<Token>(term.term_part);
+			ss << token.value.value();
+		}
 	}
 	return ss.str();
 }

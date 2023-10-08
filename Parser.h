@@ -31,8 +31,11 @@ struct NodeBinExpr {
 	std::variant<NodeBinExprAdd*, NodeBinExprMult*> expr;
 };
 
+struct NodeTerm {
+	std::variant<Token, NodeTppInp> term_part;
+};
 struct NodeExpr {
-	std::variant<Token, NodeTppInp, NodeBinExpr*> exprPart;
+	std::variant<NodeTerm, NodeBinExpr*> exprPart;
 };
 
 struct NodeTest {
@@ -119,6 +122,8 @@ private:
 	std::optional<NodeElse> parseOptionalElse();
 	std::vector<NodeElif> parseElifs();
 	std::optional<NodeExpr*> parse_expr();
+	std::optional<NodeBinExpr*> parse_bin_expr();
+	std::optional<NodeTerm> parse_term();
 	NodeIf parseIf();
 	std::vector<standAloneNode> parseProgram();
 	void parseOpenParen();

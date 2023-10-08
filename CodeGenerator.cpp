@@ -2,21 +2,54 @@
 
 using namespace std;
 
+std::string Generator::convertTerm(const NodeTerm term) {
+	std::stringstream ss;
+	if (std::holds_alternative<Token>(term.term_part)) {
+		const Token& token = std::get<Token>(term.term_part);
+		if (token.type == TokenType::string_lit) {
+			ss << "\"" << token.value.value() << "\"";
+		}
+		else if (token.type == TokenType::tppcount) {
+			ss << "argc";
+		}
+		else {
+			ss << token.value.value();
+		}
+	}else if (std::holds_alternative<NodeTppInp>(term.term_part)) {
+		const NodeTppInp& tppInp = std::get<NodeTppInp>(term.term_part);
+		ss << "argv[" << tppInp.number << "]";
+	}
+	else {
+		std::cerr << "wrong expresion" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	return ss.str();
+}
+
 // Function to convert a NodeExpr to a string suitable for the << operator
 std::string Generator::convertNodeExpr(const NodeExpr node) {
 	std::stringstream ss;
-	if (std::holds_alternative<Token>(node.exprPart)) {
-		const Token& token = std::get<Token>(node.exprPart);
-		if (token.type == TokenType::string_lit) {
-			ss << "\"" << token.value.value() << "\"";
-		}else if (token.type == TokenType::tppcount) {
-			ss << "argc";
-		}else {
-			ss << token.value.value();
+	if (std::holds_alternative<NodeTerm>(node.exprPart)) {
+		const NodeTerm& term = std::get<NodeTerm>(node.exprPart);
+		ss << convertTerm(term);
+	}else if (std::holds_alternative<NodeBinExpr*>(node.exprPart)) {
+		const NodeBinExpr* binExpr = std::get<NodeBinExpr*>(node.exprPart);
+		if (std::holds_alternative<NodeBinExprAdd*>(binExpr->expr)) {
+			const NodeBinExprAdd* binExprAdd = std::get<NodeBinExprAdd*>(binExpr->expr);
+			ss << convertNodeExpr(*binExprAdd->left);
+			ss << " + ";
+			ss << convertNodeExpr(*binExprAdd->right);
 		}
-	}else if (std::holds_alternative<NodeTppInp>(node.exprPart)) {
-		const NodeTppInp& tppInp = std::get<NodeTppInp>(node.exprPart);
-		ss << "argv[" << tppInp.number << "]";
+		else if (std::holds_alternative<NodeBinExprMult*>(binExpr->expr)) {
+			const NodeBinExprMult* binExprMult = std::get<NodeBinExprMult*>(binExpr->expr);
+			ss << convertNodeExpr(*binExprMult->left);
+			ss << " * ";
+			ss << convertNodeExpr(*binExprMult->right);
+		}
+		else {
+			std::cerr << "not implemented yet" << std::endl;
+			exit(EXIT_FAILURE);
+		}
 	}
 	return ss.str();
 }
@@ -53,8 +86,9 @@ std::string Generator::convertNodeExprOrNodeTest(std::variant<NodeExpr*, NodeTes
 	}
 	else if (std::holds_alternative<NodeTest>(node)) {
 		const NodeTest& test_node = std::get<NodeTest>(node);
-		if (std::holds_alternative<Token>(test_node.right_expr->exprPart)) {
-			const Token& token = std::get<Token>(test_node.right_expr->exprPart);
+		if (std::holds_alternative<NodeTerm>(test_node.right_expr->exprPart)) {
+			const NodeTerm& term = std::get<NodeTerm>(test_node.right_expr->exprPart);
+			const Token& token = std::get<Token>(term.term_part);
 			if (token.type == TokenType::string_lit) {
 				ss << "strcmp(";
 				ss << convertNodeExpr(*test_node.left_expr);
