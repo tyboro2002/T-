@@ -7,6 +7,14 @@ std::optional<Token> Parser::peak(int ahead) const {
 
 Token Parser::consume() { return m_tokens.at(m_index++);}
 
+bool Parser::isToken(TokenType type, int ahead) {
+	return peak(ahead).has_value() && peak(ahead).value().type == type;
+}
+
+bool Parser::isNotToken(TokenType type, int ahead) {
+	return !peak(ahead).has_value() || peak(ahead).value().type != type;
+}
+
 void Parser::sayError(char ch) {
 	if (peak().has_value()) {
 		std::cerr << "expected " << ch << " and found " << peak().value() << " after " << peak(0).value() << " at index " << m_index << std::endl;
@@ -57,24 +65,19 @@ void Parser::sayError(char ch) {
 
 std::optional<NodeTerm> Parser::parse_term() {
 	NodeTerm nodeTerm;
-	if (peak().has_value() && peak().value().type == TokenType::tppcount) {
+	if (isToken(TokenType::tppcount)) {
 		nodeTerm.term_part = tryConsume(TokenType::tppcount, "this tppCount disapeared");
-	}
-	else if (peak().has_value() && peak().value().type == TokenType::int_lit) {
+	}else if (isToken(TokenType::int_lit)) {
 		nodeTerm.term_part = tryConsume(TokenType::int_lit, "this int_lit disapeared");
-	}
-	else if (peak().has_value() && peak().value().type == TokenType::open_Quote) {
+	}else if (isToken(TokenType::open_Quote)) {
 		tryConsume(TokenType::open_Quote, "expected open quote");
 		nodeTerm.term_part = tryConsume(TokenType::string_lit, "this string_lit disapeared");
 		tryConsume(TokenType::closed_Quote, "expected closing quote");
-	}
-	else if (peak().has_value() && peak().value().type == TokenType::identifier) {
+	}else if (isToken(TokenType::identifier)) {
 		nodeTerm.term_part = tryConsume(TokenType::identifier, "this identifier disapeared");
-	}
-	else if (peak().has_value() && peak().value().type == TokenType::tppinp) {
+	}else if (isToken(TokenType::tppinp)) {
 		nodeTerm.term_part = parseTppInp();
-	}
-	else {
+	}else {
 		return {};
 	}
 	return nodeTerm;
@@ -84,9 +87,13 @@ std::optional<NodeExpr*> Parser::parse_expr() {
 	NodeExpr* nodeExpr = m_allocator.alloc<NodeExpr>();
 	//std::cout << "token is: " << peak().value() << std::endl;
 	if (auto term = parse_term()) {
-		if (peak().has_value() && (peak().value().type == TokenType::addition || peak().value().type == TokenType::multiplication)) {
+		if (peak().has_value() && 
+			(   peak().value().type == TokenType::addition || 
+				peak().value().type == TokenType::multiplication ||
+				peak().value().type == TokenType::division ||
+				peak().value().type == TokenType::subtraction)) {
 			auto binExpr = m_allocator.alloc<NodeBinExpr>();
-			if (peak().has_value() && peak().value().type == TokenType::addition) {
+			if (isToken(TokenType::addition)) {
 				NodeBinExprAdd* binExprAddition = m_allocator.alloc<NodeBinExprAdd>();
 				NodeExpr* left = m_allocator.alloc<NodeExpr>();
 				left->exprPart = term.value();
@@ -103,7 +110,7 @@ std::optional<NodeExpr*> Parser::parse_expr() {
 					exit(EXIT_FAILURE);
 				}
 			}
-			else if (peak().has_value() && peak().value().type == TokenType::multiplication) {
+			else if (isToken(TokenType::multiplication)) {
 				NodeBinExprMult* binExprMultiplication = m_allocator.alloc<NodeBinExprMult>();
 				NodeExpr* left = m_allocator.alloc<NodeExpr>();
 				left->exprPart = term.value();
@@ -112,6 +119,38 @@ std::optional<NodeExpr*> Parser::parse_expr() {
 				if (auto right = parse_expr()) {
 					binExprMultiplication->right = right.value();
 					binExpr->expr = binExprMultiplication;
+					nodeExpr->exprPart = binExpr;
+					return nodeExpr;
+				}
+				else {
+					std::cerr << "no right expresion in binary expresion" << std::endl;
+					exit(EXIT_FAILURE);
+				}
+			}else if (isToken(TokenType::subtraction)) {
+				NodeBinExprSub* binExprSubtraction = m_allocator.alloc<NodeBinExprSub>();
+				NodeExpr* left = m_allocator.alloc<NodeExpr>();
+				left->exprPart = term.value();
+				binExprSubtraction->left = left;
+				tryConsume(TokenType::subtraction, "expected -");
+				if (auto right = parse_expr()) {
+					binExprSubtraction->right = right.value();
+					binExpr->expr = binExprSubtraction;
+					nodeExpr->exprPart = binExpr;
+					return nodeExpr;
+				}
+				else {
+					std::cerr << "no right expresion in binary expresion" << std::endl;
+					exit(EXIT_FAILURE);
+				}
+			}else if (isToken(TokenType::division)) {
+				NodeBinExprDiv* binExprDivision = m_allocator.alloc<NodeBinExprDiv>();
+				NodeExpr* left = m_allocator.alloc<NodeExpr>();
+				left->exprPart = term.value();
+				binExprDivision->left = left;
+				tryConsume(TokenType::division, "expected /");
+				if (auto right = parse_expr()) {
+					binExprDivision->right = right.value();
+					binExpr->expr = binExprDivision;
 					nodeExpr->exprPart = binExpr;
 					return nodeExpr;
 				}
@@ -136,7 +175,7 @@ std::optional<NodeExpr*> Parser::parse_expr() {
 }
 
 void Parser::parseOpenParen() {
-	if (!peak().has_value() || peak().value().type != TokenType::open_Paren) {
+	if (isNotToken(TokenType::open_Paren)) {
 		sayError(OPEN_PAREN);
 		exit(EXIT_FAILURE);
 	}
@@ -144,7 +183,7 @@ void Parser::parseOpenParen() {
 }
 
 void Parser::parseCloseParen() {
-	if (!peak().has_value() || peak().value().type != TokenType::closed_Paren) {
+	if (isNotToken(TokenType::closed_Paren)) {
 		sayError(CLOSED_PAREN);
 		exit(EXIT_FAILURE);
 	}
@@ -152,7 +191,7 @@ void Parser::parseCloseParen() {
 }
 
 void Parser::parseOpenQuote() {
-	if (!peak().has_value() || peak().value().type != TokenType::open_Quote) {
+	if (isNotToken(TokenType::open_Quote)) {
 		sayError(QUOTE);
 		std::cerr << "please open your string quotes." << NewLine << peak().value() << std::endl;
 		exit(EXIT_FAILURE);
@@ -161,7 +200,7 @@ void Parser::parseOpenQuote() {
 }
 
 void Parser::parseCloseQuote() {
-	if (!peak().has_value() || peak().value().type != TokenType::closed_Quote) {
+	if (isNotToken(TokenType::closed_Quote)) {
 		sayError(QUOTE);
 		std::cerr << "please close your string quote" << std::endl;
 		exit(EXIT_FAILURE);
@@ -170,7 +209,7 @@ void Parser::parseCloseQuote() {
 }
 
 void Parser::parseOpenCurly() {
-	if (!peak().has_value() || peak().value().type != TokenType::open_curly) {
+	if (isNotToken(TokenType::open_curly)) {
 		sayError(OPEN_CURLY);
 		exit(EXIT_FAILURE);
 	}
@@ -178,7 +217,7 @@ void Parser::parseOpenCurly() {
 }
 
 void Parser::parseCloseCurly() {
-	if (!peak().has_value() || peak().value().type != TokenType::closed_curly) {
+	if (isNotToken(TokenType::closed_curly)) {
 		sayError(CLOSED_CURLY);
 		exit(EXIT_FAILURE);
 	}
@@ -186,7 +225,7 @@ void Parser::parseCloseCurly() {
 }
 
 void Parser::parseEquals() {
-	if (!peak().has_value() || peak().value().type != TokenType::equals) {
+	if (isNotToken(TokenType::equals)) {
 		sayError(EQUAL);
 		exit(EXIT_FAILURE);
 	}
@@ -194,7 +233,7 @@ void Parser::parseEquals() {
 }
 
 void Parser::parseSemi() {
-	if (!peak().has_value() || peak().value().type != TokenType::semi) {
+	if (isNotToken(TokenType::semi)) {
 		sayError(SEMI);
 		exit(EXIT_FAILURE);
 	}
@@ -202,7 +241,7 @@ void Parser::parseSemi() {
 }
 
 Token Parser::tryConsume(TokenType tokenType, std::string errorMessage) {
-	if (!peak().has_value() || peak().value().type != tokenType) {
+	if (isNotToken(tokenType)) {
 		std::cerr << errorMessage << std::endl;
 		exit(EXIT_FAILURE);
 	}
@@ -245,12 +284,12 @@ NodeSay Parser::parseSay(){
 	NodeSay print_node;
 	tryConsume(TokenType::say, "expected say");
 	parseOpenParen();
-	if (peak().has_value() && peak().value().type == TokenType::identifier) {
+	if (isToken(TokenType::identifier)) {
 		print_node = NodeSay{ .string_lit_identifier = tryConsume(TokenType::identifier, "this identifier disapeared") };
 	}
 	else {
 		parseOpenQuote();
-		if (peak().has_value() && peak().value().type == TokenType::string_lit) {
+		if (isToken(TokenType::string_lit)) {
 			print_node = NodeSay{ .string_lit_identifier = tryConsume(TokenType::string_lit, "this string_lit disapeared") };
 		}
 		parseCloseQuote();
@@ -265,12 +304,12 @@ NodeShout Parser::parseShout() {
 	NodeShout print_node;
 	tryConsume(TokenType::shout, "expected shout");
 	parseOpenParen();
-	if (peak().has_value() && peak().value().type == TokenType::identifier) {
+	if (isToken(TokenType::identifier)) {
 		print_node = NodeShout{ .string_lit_identifier = tryConsume(TokenType::identifier, "this identifier disapeared") };
 	}
 	else {
 		parseOpenQuote();
-		if (peak().has_value() && peak().value().type == TokenType::string_lit) {
+		if (isToken(TokenType::string_lit)) {
 			print_node = NodeShout{ .string_lit_identifier = tryConsume(TokenType::string_lit, "this string_lit disapeared") };
 		}
 		parseCloseQuote();
@@ -299,7 +338,7 @@ NodeExit Parser::parseExit() {
 
 std::optional<NodeElse> Parser::parseOptionalElse() {
 	NodeElse elseNode;
-	if (!peak().has_value() || peak().value().type != TokenType::_else) {
+	if (isNotToken(TokenType::_else)) {
 		return {};
 	}
 	tryConsume(TokenType::_else, "expected else"); // consume the else token
@@ -312,7 +351,7 @@ std::optional<NodeElse> Parser::parseOptionalElse() {
 std::vector<NodeElif> Parser::parseElifs() {
 	std::vector<NodeElif> elifs;
 	NodeElif elifNode;// = m_allocator.alloc<NodeElif>();
-	while (peak().has_value() && peak().value().type == TokenType::_elif) {
+	while (isToken(TokenType::_elif)) {
 		tryConsume(TokenType::_elif, "expected elif"); // consume the elif
 		parseOpenParen();
 		if (auto node_expr = parse_expr()) {
@@ -405,28 +444,27 @@ std::vector<standAloneNode> Parser::parseProgram(){
 	program prog;
 	while (peak().has_value()) {
 		//std::cout << "token now is: " << peak().value() << std::endl;
-		if (peak().value().type == TokenType::closed_curly) {
+		if (isToken(TokenType::closed_curly)) {
 			return prog.codeLines;
-		}else if (peak().value().type == TokenType::open_curly) {
+		}else if (isToken(TokenType::open_curly)) {
 			tryConsume(TokenType::open_curly, "this open curly disapeared");
 			prog.codeLines.push_back(NodeScope{ .codeLines = parseProgram() });
 			parseCloseCurly();
-		
-		}else if (peak().value().type == TokenType::request) {
+		}else if (isToken(TokenType::request)) {
 			prog.codeLines.push_back(parseInput()); // Add the input node to the program
-		}else if (peak().value().type == TokenType::_exit) {
+		}else if (isToken(TokenType::_exit)) {
 			prog.codeLines.push_back(parseExit()); // Add the exit node to the program
-		}else if (peak().value().type == TokenType::say) {
+		}else if (isToken(TokenType::say)) {
 			prog.codeLines.push_back(parseSay()); // Add the say node to the program
-		}else if (peak().value().type == TokenType::shout) {
+		}else if (isToken(TokenType::shout)) {
 			prog.codeLines.push_back(parseShout()); // Add the shout node to the program
-		}else if (peak().value().type == TokenType::_return) {
+		}else if (isToken(TokenType::_return)) {
 			prog.codeLines.push_back(parseReturn()); // Add the return node to the program
-		}else if (peak().value().type == TokenType::identifier) {
+		}else if (isToken(TokenType::identifier)) {
 			prog.codeLines.push_back(parseIdentifier()); // Add the identifier node to the program
-		}else if (peak().value().type == TokenType::_if) {
+		}else if (isToken(TokenType::_if)) {
 			prog.codeLines.push_back(parseIf()); // Add the if node to the program
-		}else if (peak().value().type == TokenType::var_dump) {
+		}else if (isToken(TokenType::var_dump)) {
 			prog.codeLines.push_back(parseVarDump()); // Add the varDump node to the program
 		}else {
 			std::cerr << "found a token i dont like here, namely: " << peak().value() << std::endl; //TODO add parsing for extra nodes
@@ -439,7 +477,7 @@ std::vector<standAloneNode> Parser::parseProgram(){
 Token Parser::parseStringLit() {
 	Token str;
 	parseOpenQuote();
-	if (peak().has_value() && peak().value().type == TokenType::string_lit) {
+	if (isToken(TokenType::string_lit)) {
 		str = tryConsume(TokenType::string_lit, "this string_lit disapeared");
 	}
 	else {
@@ -453,22 +491,22 @@ Token Parser::parseStringLit() {
 std::optional<NodeTest> Parser::parseTest(NodeExpr* exprNodeLeft) {
 	NodeTest nodeTest;//NodeTest* nodeTest = m_allocator.alloc<NodeTest>();
 	nodeTest.left_expr = exprNodeLeft;
-	if (peak().has_value() && peak().value().type == TokenType::test_equal) {
+	if (isToken(TokenType::test_equal)) {
 		consume();
 		nodeTest.test_expr = Token{ .type = TokenType::test_equal };
-	}else if (peak().has_value() && peak().value().type == TokenType::test_not_equal) {
+	}else if (isToken(TokenType::test_not_equal)) {
 		consume();
 		nodeTest.test_expr = Token{ .type = TokenType::test_not_equal };
-	}else if (peak().has_value() && peak().value().type == TokenType::test_equal_greater) {
+	}else if (isToken(TokenType::test_equal_greater)) {
 		consume();
 		nodeTest.test_expr = Token{ .type = TokenType::test_equal_greater };
-	}else if (peak().has_value() && peak().value().type == TokenType::test_equal_smaller) {
+	}else if (isToken(TokenType::test_equal_smaller)) {
 		consume();
 		nodeTest.test_expr = Token{ .type = TokenType::test_equal_smaller };
-	}else if (peak().has_value() && peak().value().type == TokenType::test_greater) {
+	}else if (isToken(TokenType::test_greater)) {
 		consume();
 		nodeTest.test_expr = Token{ .type = TokenType::test_greater };
-	}else if (peak().has_value() && peak().value().type == TokenType::test_smaller) {
+	}else if (isToken(TokenType::test_smaller)) {
 		consume();
 		nodeTest.test_expr = Token{ .type = TokenType::test_smaller };
 	}else {
@@ -486,7 +524,7 @@ std::optional<NodeTest> Parser::parseTest(NodeExpr* exprNodeLeft) {
 
 std::optional<program> Parser::parse() {
 	program prog;
-	while (peak().has_value() && peak().value().type == TokenType::_import) {
+	while (isToken(TokenType::_import)) {
 		tryConsume(TokenType::_import, "this import disapeared"); // consume the import
 		prog.imports.push_back(parseStringLit().value.value());
 		parseSemi(); //consuming the semicoln

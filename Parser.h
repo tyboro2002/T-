@@ -27,8 +27,18 @@ struct NodeBinExprMult {
 	NodeExpr* right;
 };
 
+struct NodeBinExprSub {
+	NodeExpr* left;
+	NodeExpr* right;
+};
+
+struct NodeBinExprDiv {
+	NodeExpr* left;
+	NodeExpr* right;
+};
+
 struct NodeBinExpr {
-	std::variant<NodeBinExprAdd*, NodeBinExprMult*> expr;
+	std::variant<NodeBinExprAdd*, NodeBinExprMult*, NodeBinExprSub*, NodeBinExprDiv*> expr;
 };
 
 struct NodeTerm {
@@ -107,6 +117,8 @@ private:
 	[[nodiscard]] std::optional<Token> peak(int ahead = 1) const;
 	Token consume();
 	Token tryConsume(TokenType tokenType, std::string errorMessage);
+	bool isToken(TokenType type, int ahead = 1);
+	bool isNotToken(TokenType type, int ahead = 1);
 	void sayError(char ch);
 
 	NodeVarDump parseVarDump();

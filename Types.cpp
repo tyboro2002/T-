@@ -67,6 +67,10 @@ std::string TokenTypeToString(TokenType type) {
         return "addition";
     case TokenType::multiplication:
         return "multiplication";
+    case TokenType::subtraction:
+        return "subtraction";
+    case TokenType::division:
+        return "division";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

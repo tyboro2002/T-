@@ -39,14 +39,22 @@ std::string Generator::convertNodeExpr(const NodeExpr node) {
 			ss << convertNodeExpr(*binExprAdd->left);
 			ss << " + ";
 			ss << convertNodeExpr(*binExprAdd->right);
-		}
-		else if (std::holds_alternative<NodeBinExprMult*>(binExpr->expr)) {
+		}else if (std::holds_alternative<NodeBinExprMult*>(binExpr->expr)) {
 			const NodeBinExprMult* binExprMult = std::get<NodeBinExprMult*>(binExpr->expr);
 			ss << convertNodeExpr(*binExprMult->left);
 			ss << " * ";
 			ss << convertNodeExpr(*binExprMult->right);
-		}
-		else {
+		}else if (std::holds_alternative<NodeBinExprDiv*>(binExpr->expr)) {
+			const NodeBinExprDiv* binExprDiv = std::get<NodeBinExprDiv*>(binExpr->expr);
+			ss << convertNodeExpr(*binExprDiv->left);
+			ss << " / ";
+			ss << convertNodeExpr(*binExprDiv->right);
+		}else if (std::holds_alternative<NodeBinExprSub*>(binExpr->expr)) {
+			const NodeBinExprSub* binExprSub = std::get<NodeBinExprSub*>(binExpr->expr);
+			ss << convertNodeExpr(*binExprSub->left);
+			ss << " - ";
+			ss << convertNodeExpr(*binExprSub->right);
+		}else {
 			std::cerr << "not implemented yet" << std::endl;
 			exit(EXIT_FAILURE);
 		}
@@ -58,20 +66,15 @@ std::string convertTest(Token test) {
 	std::stringstream ss;
 	if (test.type == TokenType::test_equal) {
 		ss << " == ";
-	}
-	else if (test.type == TokenType::test_not_equal) {
+	}else if (test.type == TokenType::test_not_equal) {
 		ss << " != ";
-	}
-	else if (test.type == TokenType::test_equal_greater) {
+	}else if (test.type == TokenType::test_equal_greater) {
 		ss << " >= ";
-	}
-	else if (test.type == TokenType::test_equal_smaller) {
+	}else if (test.type == TokenType::test_equal_smaller) {
 		ss << " <= ";
-	}
-	else if (test.type == TokenType::test_greater) {
+	}else if (test.type == TokenType::test_greater) {
 		ss << " > ";
-	}
-	else if (test.type == TokenType::test_smaller) {
+	}else if (test.type == TokenType::test_smaller) {
 		ss << " < ";
 	}
 	return ss.str();
@@ -83,8 +86,7 @@ std::string Generator::convertNodeExprOrNodeTest(std::variant<NodeExpr*, NodeTes
 	if (std::holds_alternative<NodeExpr*>(node)) {
 		const NodeExpr* expr_node = std::get<NodeExpr*>(node);
 		ss << convertNodeExpr(*expr_node);
-	}
-	else if (std::holds_alternative<NodeTest>(node)) {
+	}else if (std::holds_alternative<NodeTest>(node)) {
 		const NodeTest& test_node = std::get<NodeTest>(node);
 		if (std::holds_alternative<NodeTerm>(test_node.right_expr->exprPart)) {
 			const NodeTerm& term = std::get<NodeTerm>(test_node.right_expr->exprPart);
@@ -103,8 +105,7 @@ std::string Generator::convertNodeExprOrNodeTest(std::variant<NodeExpr*, NodeTes
 		ss << convertNodeExpr(*test_node.left_expr);
 		ss << convertTest(test_node.test_expr);
 		ss << convertNodeExpr(*test_node.right_expr);
-	}
-	else {
+	}else {
 		std::cerr << "invalid type in expr or test!" << std::endl;
 		exit(EXIT_FAILURE);
 	}

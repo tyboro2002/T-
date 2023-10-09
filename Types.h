@@ -19,6 +19,10 @@
 #define COMMA ','
 #define QUOTE '"'
 #define ESCAPE_CHAR '\\'
+#define ADDITION '+'
+#define MULTIPLICATION '*'
+#define SUBTRACTION '-'
+#define DIVISION '/'
 
 
 #define COMMENT_CHAR '#'
@@ -73,7 +77,9 @@ enum class TokenType {
     tppinp,
     tppcount,
     addition,
-    multiplication
+    multiplication,
+    subtraction,
+    division
 };
 
 struct Token {
