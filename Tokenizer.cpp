@@ -8,6 +8,7 @@ std::optional<char> Tokenizer::peak(int ahead) const {
 }
 
 char Tokenizer::consume() { return m_src.at(m_index++); }
+void Tokenizer::discard(int amount) { m_index+=amount; }
 
 char Tokenizer::tryConsume(char karakter, std::string errorMessage) {
 	if (!peak().has_value() || peak().value() == karakter) {
@@ -31,41 +32,33 @@ std::vector<Token> Tokenizer::tokenize() {
 	
 	while (peak().has_value()) {
 		if (isChar(MULTILINE_COMMENT_FIRST_CHAR) && isChar(MULTILINE_COMMENT_SECOND_CHAR,2)) {
-			consume(); // consume MULTILINE_COMMENT_FIRST_CHAR
-			consume(); // consume MULTILINE_COMMENT_SECOND_CHAR
+			discard(2); // consume MULTILINE_COMMENT_FIRST_CHAR consume MULTILINE_COMMENT_SECOND_CHAR
 			while (isNotChar(MULTILINE_COMMENT_SECOND_CHAR) || isNotChar(MULTILINE_COMMENT_FIRST_CHAR,2)) {
 				if (!peak().has_value()) {
 					std::cerr << "found unexpected EOF while parsing multiline comment" << std::endl;
 					exit(EXIT_FAILURE);
 				}
-				consume();
+				discard();
 			}
-			consume(); // consume MULTILINE_COMMENT_SECOND_CHAR
-			consume(); // consume MULTILINE_COMMENT_FIRST_CHAR
+			discard(2); // consume MULTILINE_COMMENT_SECOND_CHAR consume MULTILINE_COMMENT_FIRST_CHAR
 		}else if (isChar(EQUAL) && isChar(EQUAL,2)) {
-			consume(); // consume =
-			consume(); // consume =
+			discard(2); // consume = consume =
 			tokens.push_back({ .type = TokenType::test_equal });
 		}else if (isChar(NOT) && isChar(EQUAL,2)) {
-			consume(); // consume !
-			consume(); // consume =
+			discard(2); // consume ! consume =
 			tokens.push_back({ .type = TokenType::test_not_equal });
-		}
-		else if (isChar(LARGER) && isChar(EQUAL,2)) {
-			consume(); // consume >
-			consume(); // consume =
+		}else if (isChar(LARGER) && isChar(EQUAL,2)) {
+			discard(2); // consume > consume =
 			tokens.push_back({ .type = TokenType::test_equal_greater });
-		}
-		else if (isChar(SMALLER) && isChar(EQUAL,2)) {
-			consume(); // consume <
-			consume(); // consume =
+		}else if (isChar(SMALLER) && isChar(EQUAL,2)) {
+			discard(2); // consume < consume =
 			tokens.push_back({ .type = TokenType::test_equal_smaller });
 		}else if (isChar(COMMENT_CHAR)) {
 			while (peak().has_value() && peak().value() != '\n' && peak().value() != '\r\n') {
-				consume();
+				discard();
 			}
 		}else if (isChar(QUOTE)) {
-			consume(); // consume the opening "
+			discard(); // consume the opening "
 			tokens.push_back({ .type = TokenType::open_Quote });
 			while (peak().has_value() && peak().value() != QUOTE) {
 				if (isChar(ESCAPE_CHAR)) {
@@ -74,7 +67,7 @@ std::vector<Token> Tokenizer::tokenize() {
 				}
 				buf.push_back(consume());
 			}
-			consume(); // consume the closing "
+			discard(); // consume the closing "
 			tokens.push_back({ .type = TokenType::string_lit, .value = buf });
 			tokens.push_back({ .type = TokenType::closed_Quote });
 			buf.clear();
@@ -83,63 +76,47 @@ std::vector<Token> Tokenizer::tokenize() {
 			while (peak().has_value() && isalnum(peak().value())) {
 				buf.push_back(consume());
 			}
-
 			if (buf == EXIT) {
 				tokens.push_back({ .type = TokenType::_exit });
 				buf.clear();
-				continue;
 			}/*else if (buf == IMPORT) {
 				tokens.push_back({ .type = TokenType::_import });
 				buf.clear();
-				continue;
 			}*/else if (buf == RETURN) {
 				tokens.push_back({ .type = TokenType::_return });
 				buf.clear();
-				continue;
 			}else if (buf == REQUEST) {
 				tokens.push_back({ .type = TokenType::request });
 				buf.clear();
-				continue;
 			}else if (buf == SAY) {
 				tokens.push_back({ .type = TokenType::say });
 				buf.clear();
-				continue;
 			}else if (buf == SHOUT) {
 				tokens.push_back({ .type = TokenType::shout });
 				buf.clear();
-				continue;
 			}else if (buf == IF) {
 				tokens.push_back({ .type = TokenType::_if });
 				buf.clear();
-				continue;
 			}else if (buf == ELSE) {
 				tokens.push_back({ .type = TokenType::_else });
 				buf.clear();
-				continue;
-			}
-			else if (buf == ELIF) {
+			}else if (buf == ELIF) {
 				tokens.push_back({ .type = TokenType::_elif });
 				buf.clear();
-				continue;
 			}else if (buf == DUMPVAR) {
 				tokens.push_back({ .type = TokenType::var_dump });
 				buf.clear();
-				continue;
 			}else if (buf == TPPINP) {
 				tokens.push_back({ .type = TokenType::tppinp });
 				buf.clear();
-				continue;
 			}else if (buf == TPPCOUNT) {
 				tokens.push_back({ .type = TokenType::tppcount });
 				buf.clear();
-				continue;
 			}else {
 				tokens.push_back({ .type = TokenType::identifier, .value = buf });
 				buf.clear();
-				continue;
 			}
-		}
-		else if (isdigit(peak().value())) {
+		}else if (isdigit(peak().value())) {
 			buf.push_back(consume());
 			while (peak().has_value() && isdigit(peak().value())) {
 				buf.push_back(consume());
@@ -148,46 +125,45 @@ std::vector<Token> Tokenizer::tokenize() {
 			buf.clear();
 		}else if (isChar(SEMI)) {
 			tokens.push_back({ .type = TokenType::semi });
-			consume();
+			discard();
 		}else if (isChar(OPEN_PAREN)) {
 			tokens.push_back({ .type = TokenType::open_Paren });
-			consume();
+			discard();
 		}else if (isChar(CLOSED_PAREN)) {
 			tokens.push_back({ .type = TokenType::closed_Paren });
-			consume();
+			discard();
 		}else if (isChar(OPEN_CURLY)) {
 			tokens.push_back({ .type = TokenType::open_curly });
-			consume();
+			discard();
 		}else if (isChar(CLOSED_CURLY)) {
 			tokens.push_back({ .type = TokenType::closed_curly });
-			consume();
+			discard();
 		}else if (isChar(EQUAL)) {
 			tokens.push_back({ .type = TokenType::equals });
-			consume();
+			discard();
 		}else if (isChar(SMALLER)) {
 			tokens.push_back({ .type = TokenType::test_smaller });
-			consume();
+			discard();
 		}else if (isChar(LARGER)) {
 			tokens.push_back({ .type = TokenType::test_greater });
-			consume();
+			discard();
 		}else if (isChar(COMMA)) {
 			tokens.push_back({ .type = TokenType::comma });
-			consume();
+			discard();
 		}else if (isChar(ADDITION)) { //TODO pull to types.h
 			tokens.push_back({ .type = TokenType::addition });
-			consume();
+			discard();
 		}else if (isChar(MULTIPLICATION)) { //TODO pull to types.h
 			tokens.push_back({ .type = TokenType::multiplication });
-			consume();
+			discard();
 		}else if (isChar(SUBTRACTION)) { //TODO pull to types.h
 			tokens.push_back({ .type = TokenType::subtraction });
-			consume();
+			discard();
 		}else if (isChar(DIVISION)) { //TODO pull to types.h
 			tokens.push_back({ .type = TokenType::division });
-			consume();
+			discard();
 		}else if (isspace(peak().value())) {
-			consume();
-			continue;
+			discard();
 		}else {
 			cerr << "you messed up with: " << buf << endl;
 			exit(EXIT_FAILURE);

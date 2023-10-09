@@ -107,15 +107,19 @@ struct program {
 };
 
 class Parser {
-	const std::vector<Token> m_tokens;
-	int m_index;
-	ArenaAllocator m_allocator;
+	const std::vector<Token> m_tokens; // the token vector
+	int m_index; // index in the token vector
+	ArenaAllocator m_allocator; // allocator for memory allocation of expresions
 public:
 	Parser(std::vector<Token> tokens) : m_tokens(std::move(tokens)), m_index(0), m_allocator(1024*1024*4) /* 4mb allocator*/ {}
+	/* convert the vector of tokens to a program node */
 	std::optional<program> parse();
 private:
+	/* peak <ahead> tokens ahead in the tokens vector (dont consume) */
 	[[nodiscard]] std::optional<Token> peak(int ahead = 1) const;
+	/* consume 1 token in the token vector and return it */
 	Token consume();
+	/* try consuming <tokenType> is found return <Token> else exit the program with <errorMessage> */
 	Token tryConsume(TokenType tokenType, std::string errorMessage);
 	bool isToken(TokenType type, int ahead = 1);
 	bool isNotToken(TokenType type, int ahead = 1);
