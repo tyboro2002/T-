@@ -1,9 +1,16 @@
 loops:
 	for
 	doWhile
-	while
 
-arithmetic expresions
+arithmetic expresions:
+	pow
+	modulus
+	bitwise and
+	bitwise or
+	bitwise xor
+	()
+	...
+
 include (own files)
 
 scope objects:

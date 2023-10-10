@@ -1,5 +1,17 @@
 #include "Parser.h"
 
+int operatorToPrecedence(TokenType tokenType) { // return -1 if no bin operator else return precedence level
+	if (tokenType == TokenType::addition) return 0;
+	if (tokenType == TokenType::subtraction) return 0;
+	if (tokenType == TokenType::multiplication) return 1;
+	if (tokenType == TokenType::division) return 1;
+	return -1;
+}
+
+bool isBinOp(TokenType tokenType) { // return true if binop else return false
+	return !(operatorToPrecedence(tokenType) == -1);
+}
+
 std::optional<Token> Parser::peak(int ahead) const {
 	if (m_index + ahead > m_tokens.size()) return {};
 	else return m_tokens.at(m_index + ahead - 1);
@@ -24,45 +36,6 @@ void Parser::sayError(char ch) {
 	}
 }
 
-/*std::optional<NodeBinExpr*> Parser::parse_bin_expr() {
-	if (auto left = parse_expr()) {
-		auto binExpr = m_allocator.alloc<NodeBinExpr>();
-		if (peak().has_value() && peak().value().type == TokenType::addition) {
-			auto binExprAddition = m_allocator.alloc<NodeBinExprAdd>();
-			binExprAddition->left = left.value();
-			tryConsume(TokenType::addition, "expected +");
-			if (auto right = parse_expr()) {
-				binExprAddition->right = right.value();
-				binExpr->expr = binExprAddition;
-				return binExpr;
-			}
-			else {
-				std::cerr << "no right expresion in binary expresion" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-		}else if (peak().has_value() && peak().value().type == TokenType::multiplication) {
-			auto binExprMult = m_allocator.alloc<NodeBinExprMult>();
-			binExprMult->left = left.value();
-			tryConsume(TokenType::multiplication, "expected +");
-			if (auto right = parse_expr()) {
-				binExprMult->right = right.value();
-				binExpr->expr = binExprMult;
-				return binExpr;
-			}
-			else {
-				std::cerr << "no right expresion in binary expresion" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-		}else {
-			std::cerr << "unsuported binary operator" << std::endl;
-			exit(EXIT_FAILURE);
-		}
-	}
-	else {
-		return {};
-	}
-}*/
-
 std::optional<NodeTerm> Parser::parse_term() {
 	NodeTerm nodeTerm;
 	if (isToken(TokenType::tppcount)) {
@@ -83,95 +56,65 @@ std::optional<NodeTerm> Parser::parse_term() {
 	return nodeTerm;
 }
 
-std::optional<NodeExpr*> Parser::parse_expr() {
-	NodeExpr* nodeExpr = m_allocator.alloc<NodeExpr>();
-	//std::cout << "token is: " << peak().value() << std::endl;
-	if (auto term = parse_term()) {
-		if (peak().has_value() && 
-			(   peak().value().type == TokenType::addition || 
-				peak().value().type == TokenType::multiplication ||
-				peak().value().type == TokenType::division ||
-				peak().value().type == TokenType::subtraction)) {
-			auto binExpr = m_allocator.alloc<NodeBinExpr>();
-			if (isToken(TokenType::addition)) {
-				NodeBinExprAdd* binExprAddition = m_allocator.alloc<NodeBinExprAdd>();
-				NodeExpr* left = m_allocator.alloc<NodeExpr>();
-				left->exprPart = term.value();
-				binExprAddition->left = left;
-				tryConsume(TokenType::addition, "expected +");
-				if (auto right = parse_expr()) {
-					binExprAddition->right = right.value();
-					binExpr->expr = binExprAddition;
-					nodeExpr->exprPart = binExpr;
-					return nodeExpr;
-				}
-				else {
-					std::cerr << "no right expresion in binary expresion" << std::endl;
-					exit(EXIT_FAILURE);
-				}
+std::optional<NodeExpr*> Parser::parse_expr(int min_prec) { //TODO https://www.youtube.com/watch?v=6nl5HTGgvnk&t=1s 40:00 ->
+	std::optional<NodeTerm> term_lhs = parse_term();
+	if (!term_lhs.has_value()) {
+		return {};
+	}
+	auto expr_lhs = m_allocator.alloc<NodeExpr>();
+	expr_lhs->exprPart = term_lhs.value();
+
+	while (true) {
+		std::optional<Token> curr_tok = peak();
+		int prec;
+		if (curr_tok.has_value()){
+			TokenType tokenType = curr_tok->type;
+			prec = operatorToPrecedence(tokenType);
+			if (!isBinOp(tokenType) || prec < min_prec) { //TODO test
+				break;
 			}
-			else if (isToken(TokenType::multiplication)) {
-				NodeBinExprMult* binExprMultiplication = m_allocator.alloc<NodeBinExprMult>();
-				NodeExpr* left = m_allocator.alloc<NodeExpr>();
-				left->exprPart = term.value();
-				binExprMultiplication->left = left;
-				tryConsume(TokenType::multiplication, "expected *");
-				if (auto right = parse_expr()) {
-					binExprMultiplication->right = right.value();
-					binExpr->expr = binExprMultiplication;
-					nodeExpr->exprPart = binExpr;
-					return nodeExpr;
-				}
-				else {
-					std::cerr << "no right expresion in binary expresion" << std::endl;
-					exit(EXIT_FAILURE);
-				}
-			}else if (isToken(TokenType::subtraction)) {
-				NodeBinExprSub* binExprSubtraction = m_allocator.alloc<NodeBinExprSub>();
-				NodeExpr* left = m_allocator.alloc<NodeExpr>();
-				left->exprPart = term.value();
-				binExprSubtraction->left = left;
-				tryConsume(TokenType::subtraction, "expected -");
-				if (auto right = parse_expr()) {
-					binExprSubtraction->right = right.value();
-					binExpr->expr = binExprSubtraction;
-					nodeExpr->exprPart = binExpr;
-					return nodeExpr;
-				}
-				else {
-					std::cerr << "no right expresion in binary expresion" << std::endl;
-					exit(EXIT_FAILURE);
-				}
-			}else if (isToken(TokenType::division)) {
-				NodeBinExprDiv* binExprDivision = m_allocator.alloc<NodeBinExprDiv>();
-				NodeExpr* left = m_allocator.alloc<NodeExpr>();
-				left->exprPart = term.value();
-				binExprDivision->left = left;
-				tryConsume(TokenType::division, "expected /");
-				if (auto right = parse_expr()) {
-					binExprDivision->right = right.value();
-					binExpr->expr = binExprDivision;
-					nodeExpr->exprPart = binExpr;
-					return nodeExpr;
-				}
-				else {
-					std::cerr << "no right expresion in binary expresion" << std::endl;
-					exit(EXIT_FAILURE);
-				}
-			}else {
-				std::cerr << "unsuported binary operator" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-		}else {
-			nodeExpr->exprPart = term.value();
-			return nodeExpr;
 		}
+		Token op = consume();
+		int next_min_prec = prec + 1;
+		auto expr_rhs = parse_expr(next_min_prec);
+		if (!expr_rhs.has_value()) {
+			std::cerr << "Unable to parse expression" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
+		auto expr = m_allocator.alloc<NodeBinExpr>();
+		auto expr_lhs2 = m_allocator.alloc<NodeExpr>();
+		if (op.type == TokenType::addition) {
+			auto add = m_allocator.alloc<NodeBinExprAdd>();
+			expr_lhs2->exprPart = expr_lhs->exprPart;
+			add->left = expr_lhs2;
+			add->right = expr_rhs.value();
+			expr->expr = add;
+		}
+		else if (op.type == TokenType::subtraction) {
+			auto sub = m_allocator.alloc<NodeBinExprSub>();
+			expr_lhs2->exprPart = expr_lhs->exprPart;
+			sub->left = expr_lhs2;
+			sub->right = expr_rhs.value();
+			expr->expr = sub;
+		}
+		else if (op.type == TokenType::division) {
+			auto divi = m_allocator.alloc<NodeBinExprDiv>();
+			expr_lhs2->exprPart = expr_lhs->exprPart;
+			divi->left = expr_lhs2;
+			divi->right = expr_rhs.value();
+			expr->expr = divi;
+		}
+		else if (op.type == TokenType::multiplication) {
+			auto multi = m_allocator.alloc<NodeBinExprMult>();
+			expr_lhs2->exprPart = expr_lhs->exprPart;
+			multi->left = expr_lhs2;
+			multi->right = expr_rhs.value();
+			expr->expr = multi;
+		}
+		expr_lhs->exprPart = expr;
 	}
-	else {
-		std::cerr << "unable to parse term" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	return nodeExpr;
+	return expr_lhs;
 }
 
 void Parser::parseOpenParen() {
@@ -267,15 +210,38 @@ NodeReturn Parser::parseReturn(){
 NodeIdentifier Parser::parseIdentifier() {
 	NodeIdentifier identifier_node;
 	Token nameToken = tryConsume(TokenType::identifier, "expected identifier");
-	parseEquals();
+	if (isToken(TokenType::compound_add)) {
+		identifier_node.compound = tryConsume(TokenType::compound_add, "expected +=");
+	}else if (isToken(TokenType::compound_sub)) {
+		identifier_node.compound = tryConsume(TokenType::compound_sub, "expected -=");
+	}else if (isToken(TokenType::compound_div)) {
+		identifier_node.compound = tryConsume(TokenType::compound_div, "expected /=");
+	}else if (isToken(TokenType::compound_mult)) {
+		identifier_node.compound = tryConsume(TokenType::compound_mult, "expected *=");
+	}else if (isToken(TokenType::compound_modulus)) {
+		identifier_node.compound = tryConsume(TokenType::compound_modulus, "expected %=");
+	}else if (isToken(TokenType::compound_bitwise_and)) {
+		identifier_node.compound = tryConsume(TokenType::compound_bitwise_and, "expected &=");
+	}else if (isToken(TokenType::compound_bitwise_or)) {
+		identifier_node.compound = tryConsume(TokenType::compound_bitwise_or, "expected |=");
+	}else if (isToken(TokenType::compound_bitwise_xor)) {
+		identifier_node.compound = tryConsume(TokenType::compound_bitwise_xor, "expected ^=");
+	}else if (isToken(TokenType::compound_left_shift)) {
+		identifier_node.compound = tryConsume(TokenType::compound_left_shift, "expected <<=");
+	}else if (isToken(TokenType::compound_right_shift)) {
+		identifier_node.compound = tryConsume(TokenType::compound_right_shift, "expected >>=");
+	}else {
+		parseEquals();
+	}
+
 	if (auto node_expr = parse_expr()) {
-		identifier_node = NodeIdentifier{ .name = nameToken.value.value(), .expr = node_expr.value() };
+		identifier_node.name = nameToken.value.value();
+		identifier_node.expr = node_expr.value();
 	}
 	else {
 		std::cerr << "invalid expresion encounterd in identifier!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	
 	parseSemi();
 	return identifier_node;
 }
@@ -443,7 +409,6 @@ NodeTppInp Parser::parseTppInp() {
 std::vector<standAloneNode> Parser::parseProgram(){
 	program prog;
 	while (peak().has_value()) {
-		//std::cout << "token now is: " << peak().value() << std::endl;
 		if (isToken(TokenType::closed_curly)) {
 			return prog.codeLines;
 		}else if (isToken(TokenType::open_curly)) {
@@ -466,7 +431,10 @@ std::vector<standAloneNode> Parser::parseProgram(){
 			prog.codeLines.push_back(parseIf()); // Add the if node to the program
 		}else if (isToken(TokenType::var_dump)) {
 			prog.codeLines.push_back(parseVarDump()); // Add the varDump node to the program
-		}else {
+		}else if (isToken(TokenType::_while)) {
+			prog.codeLines.push_back(parseWhile()); // Add the while node to the program
+		}
+		else {
 			std::cerr << "found a token i dont like here, namely: " << peak().value() << std::endl; //TODO add parsing for extra nodes
 			exit(EXIT_FAILURE);
 		}
@@ -489,7 +457,7 @@ Token Parser::parseStringLit() {
 }
 
 std::optional<NodeTest> Parser::parseTest(NodeExpr* exprNodeLeft) {
-	NodeTest nodeTest;//NodeTest* nodeTest = m_allocator.alloc<NodeTest>();
+	NodeTest nodeTest;
 	nodeTest.left_expr = exprNodeLeft;
 	if (isToken(TokenType::test_equal)) {
 		consume();
@@ -520,6 +488,32 @@ std::optional<NodeTest> Parser::parseTest(NodeExpr* exprNodeLeft) {
 		exit(EXIT_FAILURE);
 	}
 	return nodeTest;
+}
+
+NodeWhile Parser::parseWhile() {
+	NodeWhile whileNode;
+	tryConsume(TokenType::_while, "expected while");
+	parseOpenParen();
+	if (auto node_expr = parse_expr()) {
+		//whileNode.expr = node_expr.value();
+		NodeExpr* exprNodeLeft = node_expr.value();
+		if (auto node_test = parseTest(exprNodeLeft)) {
+			parseCloseParen();
+			parseOpenCurly();
+			whileNode = NodeWhile{ .expr = node_test.value(), .scope = parseProgram()};
+		}
+		else {
+			parseCloseParen();
+			parseOpenCurly();
+			whileNode = NodeWhile{ .expr = exprNodeLeft, .scope = parseProgram() };
+		}
+	}
+	else {
+		std::cerr << "found no expresion in while" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	parseCloseCurly();
+	return whileNode;
 }
 
 std::optional<program> Parser::parse() {

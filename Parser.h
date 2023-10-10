@@ -5,7 +5,11 @@
 #include "Types.h"
 #include "arena.h"
 
-#define standAloneNode std::variant<NodeExit, NodeSay, NodeShout, NodeReturn, NodeIdentifier, NodeScope, NodeIf, NodeInput, NodeVarDump>
+#define standAloneNode std::variant<NodeExit, NodeSay, NodeShout, NodeReturn, NodeIdentifier, NodeScope, NodeIf, NodeInput, NodeVarDump, NodeWhile>
+
+int operatorToPrecedence(TokenType tokenType);
+
+bool isBinOp(TokenType tokenType);
 
 struct NodeTppInp {
 	int number;
@@ -76,10 +80,12 @@ struct NodeExit {
 
 struct NodeIdentifier {
 	std::string name;
+	std::optional<Token> compound;
 	NodeExpr* expr;
 };
 
 struct NodeIf;
+struct NodeWhile;
 
 struct NodeScope {
 	std::vector<standAloneNode> codeLines;
@@ -91,6 +97,11 @@ struct NodeElif {
 };
 
 struct NodeElse {
+	NodeScope scope;
+};
+
+struct NodeWhile {
+	std::variant<NodeExpr*, NodeTest> expr;
 	NodeScope scope;
 };
 
@@ -137,8 +148,8 @@ private:
 	std::optional<NodeTest> parseTest(NodeExpr* exprNodeLeft);
 	std::optional<NodeElse> parseOptionalElse();
 	std::vector<NodeElif> parseElifs();
-	std::optional<NodeExpr*> parse_expr();
-	//std::optional<NodeBinExpr*> parse_bin_expr();
+	std::optional<NodeExpr*> parse_expr(int min_prec = 0);
+	NodeWhile parseWhile();
 	std::optional<NodeTerm> parse_term();
 	NodeIf parseIf();
 	std::vector<standAloneNode> parseProgram();

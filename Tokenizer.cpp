@@ -53,6 +53,36 @@ std::vector<Token> Tokenizer::tokenize() {
 		}else if (isChar(SMALLER) && isChar(EQUAL,2)) {
 			discard(2); // consume < consume =
 			tokens.push_back({ .type = TokenType::test_equal_smaller });
+		}else if (isChar(ADDITION) && isChar(EQUAL, 2)) {
+			discard(2); // consume + consume =
+			tokens.push_back({ .type = TokenType::compound_add });
+		}else if (isChar(SUBTRACTION) && isChar(EQUAL, 2)) {
+			discard(2); // consume - consume =
+			tokens.push_back({ .type = TokenType::compound_sub });
+		}else if (isChar(DIVISION) && isChar(EQUAL, 2)) {
+			discard(2); // consume / consume =
+			tokens.push_back({ .type = TokenType::compound_div });
+		}else if (isChar(MULTIPLICATION) && isChar(EQUAL, 2)) {
+			discard(2); // consume * consume =
+			tokens.push_back({ .type = TokenType::compound_mult });
+		}else if (isChar(MODULUS) && isChar(EQUAL, 2)) {
+			discard(2); // consume % consume =
+			tokens.push_back({ .type = TokenType::compound_modulus });
+		}else if (isChar(BITWISE_AND) && isChar(EQUAL, 2)) {
+			discard(2); // consume & consume =
+			tokens.push_back({ .type = TokenType::compound_bitwise_and });
+		}else if (isChar(BITWISE_OR) && isChar(EQUAL, 2)) {
+			discard(2); // consume | consume =
+			tokens.push_back({ .type = TokenType::compound_bitwise_or });
+		}else if (isChar(BITWISE_XOR) && isChar(EQUAL, 2)) {
+			discard(2); // consume ^ consume =
+			tokens.push_back({ .type = TokenType::compound_bitwise_xor });
+		}else if (isChar(SMALLER) && isChar(SMALLER, 2) && isChar(EQUAL,3)) {
+			discard(3); // consume < consume < consume =
+			tokens.push_back({ .type = TokenType::compound_left_shift });
+		}else if (isChar(LARGER) && isChar(LARGER, 2) && isChar(EQUAL, 3)) {
+			discard(3); // consume > consume > consume =
+			tokens.push_back({ .type = TokenType::compound_right_shift });
 		}else if (isChar(COMMENT_CHAR)) {
 			while (peak().has_value() && peak().value() != '\n' && peak().value() != '\r\n') {
 				discard();
@@ -111,6 +141,9 @@ std::vector<Token> Tokenizer::tokenize() {
 				buf.clear();
 			}else if (buf == TPPCOUNT) {
 				tokens.push_back({ .type = TokenType::tppcount });
+				buf.clear();
+			}else if (buf == WHILE) {
+				tokens.push_back({ .type = TokenType::_while });
 				buf.clear();
 			}else {
 				tokens.push_back({ .type = TokenType::identifier, .value = buf });

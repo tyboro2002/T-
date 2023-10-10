@@ -23,6 +23,10 @@
 #define MULTIPLICATION '*'
 #define SUBTRACTION '-'
 #define DIVISION '/'
+#define MODULUS '%'
+#define BITWISE_AND '&'
+#define BITWISE_OR '|'
+#define BITWISE_XOR '^'
 
 
 #define COMMENT_CHAR '#'
@@ -41,6 +45,7 @@
 #define DUMPVAR "dumpVar"
 #define TPPINP "tppInp"
 #define TPPCOUNT "tppCount"
+#define WHILE "while"
 
 #define IMPORT "import"
 
@@ -79,7 +84,19 @@ enum class TokenType {
     addition,
     multiplication,
     subtraction,
-    division
+    division,
+    compound_add, // +=
+    compound_sub, // -=
+    compound_div, // /=
+    compound_mult, // *=
+    compound_modulus, // %=
+    compound_bitwise_and, // &=
+    compound_bitwise_or, // |=
+    compound_bitwise_xor, // ^=
+    compound_left_shift, // <<=
+    compound_right_shift, // >>=
+    _while
+
 };
 
 struct Token {

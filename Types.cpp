@@ -71,6 +71,28 @@ std::string TokenTypeToString(TokenType type) {
         return "subtraction";
     case TokenType::division:
         return "division";
+    case TokenType::compound_add: // +=
+        return "compound_add";
+    case TokenType::compound_sub: // -=
+        return "compound_sub";
+    case TokenType::compound_div: // /=
+        return "compound_div";
+    case TokenType::compound_mult: // *=
+        return "compound_mult";
+    case TokenType::compound_modulus: // %=
+        return "compound_modulus";
+    case TokenType::compound_bitwise_and: // &=
+        return "compound_bitwise_and";
+    case TokenType::compound_bitwise_or: // |=
+        return "compound_bitwise_or";
+    case TokenType::compound_bitwise_xor: // ^=
+        return "compound_bitwise_xor";
+    case TokenType::compound_left_shift: // <<=
+        return "compound_left_shift";
+    case TokenType::compound_right_shift: // >>=
+        return "compound_right_shift";
+    case TokenType::_while:
+        return "while";
     // Add more cases for other TokenType values as needed
     default:
         return "Unknown";

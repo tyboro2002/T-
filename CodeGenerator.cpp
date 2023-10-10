@@ -80,6 +80,44 @@ std::string convertTest(Token test) {
 	return ss.str();
 }
 
+std::string convertCompound(Token compound) {
+	std::stringstream ss;
+	if (compound.type == TokenType::compound_add) {
+		ss << " += ";
+	}else if (compound.type == TokenType::compound_sub) {
+		ss << " -= ";
+	}else if (compound.type == TokenType::compound_div) {
+		ss << " /= ";
+	}else if (compound.type == TokenType::compound_mult) {
+		ss << " *= ";
+	}else if (compound.type == TokenType::compound_modulus) {
+		ss << " %= ";
+	}else if (compound.type == TokenType::compound_bitwise_and) {
+		ss << " &= ";
+	}else if (compound.type == TokenType::compound_bitwise_or) {
+		ss << " |= ";
+	}else if (compound.type == TokenType::compound_bitwise_xor) {
+		ss << " ^= ";
+	}else if (compound.type == TokenType::compound_left_shift) {
+		ss << " <<= ";
+	}else if (compound.type == TokenType::compound_right_shift) {
+		ss << " >>= ";
+	}else {
+		return " = ";
+	}
+	return ss.str();
+}
+
+std::string Generator::convertWhile(const NodeWhile whileNode) {
+	std::stringstream ss;
+	ss << "while( ";
+	ss << convertNodeExprOrNodeTest(whileNode.expr);
+	ss << " ){" << NewLine;
+	ss << generateCodeLines(whileNode.scope.codeLines);
+	ss << "}" << NewLine;
+	return ss.str();
+}
+
 // Function to convert a NodeExpr to a string suitable for the << operator
 std::string Generator::convertNodeExprOrNodeTest(std::variant<NodeExpr*, NodeTest> node) {
 	std::stringstream ss;
@@ -161,11 +199,20 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 				}
 			}
 			if (!isAlreadyDefined) {
+				if (identifierNode.compound.has_value()) {
+					std::cerr << "first declare the variable: " << identifierNode.name << " when performing: " << TokenTypeToString(identifierNode.compound.value().type) << std::endl;
+					exit(EXIT_FAILURE);
+				}
 				m_defined_variabels.push_back(identifierNode.name);
 				out << "	int " << identifierNode.name << " = " << convertNodeExpr(*identifierNode.expr) << ";" << NewLine;
 			}
 			else {
-				out << "	" << identifierNode.name << " = " << convertNodeExpr(*identifierNode.expr) << ";" << NewLine;
+				if (identifierNode.compound.has_value()) {
+					std::string comp = convertCompound(identifierNode.compound.value());
+					out << "	" << identifierNode.name << comp << convertNodeExpr(*identifierNode.expr) << ";" << NewLine;
+				}else {
+					out << "	" << identifierNode.name << " = " << convertNodeExpr(*identifierNode.expr) << ";" << NewLine;
+				}
 			}
 		}
 		else if (std::holds_alternative<NodeScope>(variantNode)) {
@@ -212,7 +259,12 @@ std::string Generator::generateCodeLines(std::vector<standAloneNode> inputCodeLi
 			for (std::string str : m_defined_variabels) {
 				out << "	printf(\"the variable " << str << " contains: %d\\n\"," << str << ");" << NewLine;
 			}
-		}else {
+		}
+		else if (std::holds_alternative<NodeWhile>(variantNode)) {
+			const NodeWhile& whileNode = std::get<NodeWhile>(variantNode);
+			out << convertWhile(whileNode);
+		}
+		else {
 			std::cerr << "you did some bad formating" << std::endl;
 			exit(EXIT_FAILURE);
 		}

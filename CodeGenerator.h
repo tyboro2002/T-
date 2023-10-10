@@ -18,4 +18,5 @@ private:
 	std::string convertNodeExpr(const NodeExpr node);
 	std::string convertNodeExprOrNodeTest(std::variant<NodeExpr*, NodeTest> node);
 	std::string convertTerm(const NodeTerm term);
+	std::string convertWhile(const NodeWhile whileNode);
 };

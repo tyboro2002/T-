@@ -6,17 +6,20 @@ term -> (int_lit/identifier)
 Expr -> (term / binExpr)
 binExpr:
 	Expr * Expr (prec = 1)
+	Expr / Expr (prec = 1)
 	Expr + Expr (prec = 0)
+	Expr - Expr (prec = 0)
 Return -> (Expr / string_lit)
 say -> string_lit
 shout -> string_lit
 Exit -> Expr
-Identifier -> string + Expr
+Identifier -> string + ?compound? + Expr
 vardump -> string_lit
 input -> identifier
 if -> (expr/test) + scope + [elif] + ?else?
 elif -> (expr/test) + scope
 else -> scope
 test -> expr + testToken + expr
+while -> expr + scope
 Scope -> [(Exit/say/Return/Identifier/shout/Scope/if/input/vardump)]
 program -> [(Exit/say/Return/Identifier/shout/Scope/if/input/vardump)]

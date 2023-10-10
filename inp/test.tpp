@@ -32,10 +32,19 @@ x = 5;
 y = 9;
 z = 63;
 
+a = 5;
+a ^= 3;
+
 {
 	x = 9000;
 	#mama = 0;
 	dumpVar("in scope"); #TODO doesnt work with variables declared in scopes at the moment
+}
+
+counter = inputVariable;
+while(counter){
+	shout(counter);
+	counter -= 1;
 }
 
 /* print the vars for testing */

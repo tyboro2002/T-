@@ -55,6 +55,6 @@ if(tppInp(1) == "exit"){
 	shout("print out the values of all arguments");
 	shout("print out format: ");
 	shout("    the variable <name> contains: <value>");
-}else{
+}else{ # TODO add while
 	shout("not implemented");
 }
