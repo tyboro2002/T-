@@ -18,6 +18,9 @@ std::string Generator::convertTerm(const NodeTerm term) {
 	}else if (std::holds_alternative<NodeTppInp>(term.term_part)) {
 		const NodeTppInp& tppInp = std::get<NodeTppInp>(term.term_part);
 		ss << "argv[" << tppInp.number << "]";
+	}else if (std::holds_alternative<NodeTermParen>(term.term_part)) {
+		const NodeTermParen& term_paren = std::get<NodeTermParen>(term.term_part);
+		ss << "(" << convertNodeExpr(*term_paren.parenthesed_expr) << ")";
 	}
 	else {
 		std::cerr << "wrong expresion" << std::endl;

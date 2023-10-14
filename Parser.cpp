@@ -50,7 +50,18 @@ std::optional<NodeTerm> Parser::parse_term() {
 		nodeTerm.term_part = tryConsume(TokenType::identifier, "this identifier disapeared");
 	}else if (isToken(TokenType::tppinp)) {
 		nodeTerm.term_part = parseTppInp();
-	}else {
+	}else if (isToken(TokenType::open_Paren)) {
+		parseOpenParen();
+		auto expr = parse_expr();
+		if (!expr.has_value()) {
+			std::cerr << "expected expression" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		parseCloseParen();
+		NodeTermParen nodeTermParen = NodeTermParen{.parenthesed_expr = expr.value()};
+		nodeTerm.term_part = nodeTermParen;
+	}
+	else {
 		return {};
 	}
 	return nodeTerm;

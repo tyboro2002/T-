@@ -45,8 +45,12 @@ struct NodeBinExpr {
 	std::variant<NodeBinExprAdd*, NodeBinExprMult*, NodeBinExprSub*, NodeBinExprDiv*> expr;
 };
 
+struct NodeTermParen {
+	NodeExpr* parenthesed_expr;
+};
+
 struct NodeTerm {
-	std::variant<Token, NodeTppInp> term_part;
+	std::variant<Token, NodeTppInp, NodeTermParen> term_part;
 };
 struct NodeExpr {
 	std::variant<NodeTerm, NodeBinExpr*> exprPart;

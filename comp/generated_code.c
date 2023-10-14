@@ -28,6 +28,7 @@ else{
 	int z = 63;
 	int a = 5;
 	a ^= 3;
+	int k = (10 - 2 * 3) / 2;
 {
 	x = 9000;
 	printf("data dump of variables: (in scope) \n");
@@ -37,6 +38,7 @@ else{
 	printf("the variable y contains: %d\n",y);
 	printf("the variable z contains: %d\n",z);
 	printf("the variable a contains: %d\n",a);
+	printf("the variable k contains: %d\n",k);
 }
 	int counter = inputVariable;
 while( counter ){
@@ -50,6 +52,7 @@ while( counter ){
 	printf("the variable y contains: %d\n",y);
 	printf("the variable z contains: %d\n",z);
 	printf("the variable a contains: %d\n",a);
+	printf("the variable k contains: %d\n",k);
 	printf("the variable counter contains: %d\n",counter);
 	return(inputVariable);
     return 0;
