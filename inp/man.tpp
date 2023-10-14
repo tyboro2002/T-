@@ -55,6 +55,11 @@ if(tppInp(1) == "exit"){
 	shout("print out the values of all arguments");
 	shout("print out format: ");
 	shout("    the variable <name> contains: <value>");
-}else{ # TODO add while
+}elif(tppInp(1) == "while"){
+	shout("while");
+	shout("gramarly: while(<expresion>){");
+	shout("}");
+	shout("while the expresion results in a truthy value the scope wil be executed otherwise we jump over the scope");
+}else{
 	shout("not implemented");
 }

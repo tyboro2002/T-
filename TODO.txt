@@ -3,12 +3,13 @@ loops:
 	doWhile
 
 arithmetic expresions:
-	pow
 	modulus
 	bitwise and
 	bitwise or
 	bitwise xor
-	()
+	left shift
+	right shift
+	pow
 	...
 
 include (own files)
